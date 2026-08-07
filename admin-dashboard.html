@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>JG TechVerse 2026 — Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#04060d;
+    --glass:rgba(15,20,38,.55);
+    --line:rgba(140,170,255,.16);
+    --line-strong:rgba(140,170,255,.32);
+    --ink:#eef2ff;
+    --ink-dim:#9aa6c8;
+    --blue:#2f6bff;
+    --cyan:#39e6ff;
+    --purple:#8b5cf6;
+    --violet:#a78bfa;
+    --indigo:#6366f1;
+    --green:#34d399;
+    --amber:#fbbf24;
+    --red:#fb7185;
+    --disp:'Orbitron', sans-serif;
+    --body:'Inter', sans-serif;
+    --mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:100vh;}
+  a{color:inherit;}
+  button, input, select{font-family:inherit;}
+  ::selection{background:var(--cyan);color:#04060d;}
+
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 10% -10%, rgba(47,107,255,.20), transparent 60%),
+      radial-gradient(ellipse 900px 600px at 95% 0%, rgba(139,92,246,.16), transparent 60%),
+      var(--bg);
+  }
+
+  /* ---------------- login gate ---------------- */
+  #gate{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .gate-card{
+    width:100%;max-width:400px;background:var(--glass);border:1px solid var(--line);border-radius:22px;
+    backdrop-filter:blur(16px) saturate(150%);box-shadow:0 30px 70px -30px rgba(0,0,0,.65);
+    padding:clamp(24px,4vw,38px);
+  }
+  .brand-hud{display:flex;align-items:center;gap:10px;margin-bottom:26px;
+    font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.08em;color:var(--ink);}
+  .brand-hud .mark{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(140deg,var(--blue),var(--purple));font-size:13px;box-shadow:0 0 18px rgba(80,120,255,.6);}
+  .brand-hud small{display:block;font-family:var(--mono);font-weight:400;font-size:9px;letter-spacing:.2em;color:var(--ink-dim);margin-top:2px;}
+  .gate-card h1{font-family:var(--disp);font-weight:800;font-size:22px;text-transform:uppercase;margin-bottom:8px;color:#fff;}
+  .gate-card p.sub{color:var(--ink-dim);font-size:13.5px;line-height:1.6;margin-bottom:24px;}
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:9px;}
+  .field input{width:100%;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:13px 15px;color:var(--ink);font-size:14.5px;}
+  .field input:focus{outline:none;border-color:var(--cyan);background:rgba(57,230,255,.05);}
+  .field.invalid input{border-color:var(--red);}
+  .btn{font-family:var(--mono);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;
+    padding:14px 24px;border-radius:999px;border:none;width:100%;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:10px;
+    transition:transform .25s,box-shadow .25s;}
+  .btn-primary{background:linear-gradient(120deg,var(--blue),var(--purple));color:#fff;box-shadow:0 10px 34px -10px rgba(80,110,255,.65);}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 40px -8px rgba(80,110,255,.85);}
+  .btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none;}
+  .gate-msg{font-family:var(--mono);font-size:12px;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:none;}
+  .gate-msg.show{display:block;background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.35);color:#ffc3cd;}
+  .gate-note{font-family:var(--mono);font-size:10px;color:var(--ink-dim);margin-top:20px;line-height:1.7;text-align:center;}
+  .loading-dot{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---------------- dashboard shell ---------------- */
+  #dash{display:none;}
+  #dash.active{display:block;}
+  header.top{
+    position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;
+    padding:18px clamp(16px,4vw,44px);background:rgba(4,6,13,.75);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
+  }
+  header.top .brand-hud{margin:0;}
+  .top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .icon-btn{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink);
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:999px;padding:10px 18px;
+    cursor:pointer;transition:border-color .2s,color .2s;
+  }
+  .icon-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+  .icon-btn.danger:hover{border-color:var(--red);color:var(--red);}
+
+  main.dash-main{padding:28px clamp(16px,4vw,44px) 60px;max-width:1400px;margin:0 auto;}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
+  @media (max-width:980px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:520px){.stat-grid{grid-template-columns:1fr;}}
+  .stat-card{
+    background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px 20px;
+    backdrop-filter:blur(12px);
+  }
+  .stat-card .k{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:8px;}
+  .stat-card .v{font-family:var(--disp);font-weight:700;font-size:30px;color:#fff;}
+  .stat-card .v small{font-family:var(--mono);font-size:12px;color:var(--ink-dim);font-weight:400;}
+
+  .arena-stat-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:26px;}
+  @media (max-width:980px){.arena-stat-grid{grid-template-columns:repeat(3,1fr);}}
+  @media (max-width:560px){.arena-stat-grid{grid-template-columns:repeat(2,1fr);}}
+  .arena-stat{
+    border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.02);
+    border-left:3px solid var(--dotc);
+  }
+  .arena-stat .name{font-size:12px;color:var(--ink-dim);margin-bottom:6px;line-height:1.3;}
+  .arena-stat .count{font-family:var(--disp);font-weight:700;font-size:22px;color:#fff;}
+
+  .toolbar{
+    display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:18px;
+  }
+  .toolbar .left{display:flex;gap:10px;flex-wrap:wrap;flex:1;}
+  .search-input{
+    background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:11px 15px;
+    color:var(--ink);font-size:13.5px;min-width:220px;flex:1;
+  }
+  .search-input:focus{outline:none;border-color:var(--cyan);}
+  select.filter{
+    background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:11px 15px;
+    color:var(--ink);font-size:13px;
+  }
+
+  .table-wrap{
+    background:var(--glass);border:1px solid var(--line);border-radius:18px;overflow:hidden;
+    backdrop-filter:blur(12px);
+  }
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink-dim);padding:14px 16px;border-bottom:1px solid var(--line);white-space:nowrap;
+  }
+  tbody td{padding:14px 16px;border-bottom:1px solid rgba(140,170,255,.08);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:rgba(255,255,255,.02);}
+  .cell-name{font-weight:600;color:#fff;}
+  .cell-sub{font-family:var(--mono);font-size:11px;color:var(--ink-dim);margin-top:3px;}
+  .arena-pill{
+    display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;
+    padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--ink);white-space:nowrap;
+  }
+  .arena-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--dotc);box-shadow:0 0 6px var(--dotc);}
+  .team-pill{font-family:var(--mono);font-size:11px;color:var(--ink-dim);}
+  .status-toggle{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;
+    padding:6px 12px;border:1px solid;cursor:pointer;background:none;white-space:nowrap;
+  }
+  .status-toggle.pending{color:var(--amber);border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08);}
+  .status-toggle.verified{color:var(--green);border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08);}
+  .row-actions{display:flex;gap:8px;}
+  .mini-btn{
+    font-family:var(--mono);font-size:10.5px;border-radius:8px;border:1px solid var(--line);background:none;
+    color:var(--ink-dim);padding:6px 10px;cursor:pointer;transition:color .2s,border-color .2s;
+  }
+  .mini-btn:hover{color:var(--cyan);border-color:var(--cyan);}
+  .mini-btn.danger:hover{color:var(--red);border-color:var(--red);}
+
+  .empty-state{padding:60px 20px;text-align:center;color:var(--ink-dim);font-size:13.5px;}
+  .empty-state .big{font-family:var(--disp);font-size:18px;color:var(--ink);margin-bottom:8px;text-transform:uppercase;}
+
+  /* ---------------- main tabs ---------------- */
+  .main-tabs{display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:0;}
+  .main-tab{
+    font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);
+    background:none;border:none;padding:12px 6px;cursor:pointer;position:relative;top:1px;
+    border-bottom:2px solid transparent;transition:color .2s,border-color .2s;
+  }
+  .main-tab:hover{color:var(--ink);}
+  .main-tab.active{color:#fff;border-bottom-color:var(--cyan);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  /* ---------------- content manager ---------------- */
+  .content-intro{color:var(--ink-dim);font-size:13.5px;line-height:1.7;max-width:680px;margin-bottom:22px;}
+  .subtabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;}
+  .subtab{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-dim);
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:999px;padding:9px 16px;
+    cursor:pointer;transition:border-color .2s,color .2s,background .2s;
+  }
+  .subtab:hover{border-color:var(--cyan);color:var(--cyan);}
+  .subtab.active{background:var(--cyan);border-color:var(--cyan);color:#04060d;}
+  .content-section{display:none;}
+  .content-section.active{display:block;}
+
+  .section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+  .section-head h2{font-family:var(--disp);font-weight:700;font-size:18px;color:#fff;text-transform:uppercase;margin-bottom:6px;}
+  .section-head p{color:var(--ink-dim);font-size:12.5px;max-width:520px;line-height:1.6;}
+  .section-status{font-family:var(--mono);font-size:11px;color:var(--ink-dim);white-space:nowrap;}
+  .section-status.saved{color:var(--green);}
+  .section-status.dirty{color:var(--amber);}
+
+  .item-list{display:flex;flex-direction:column;gap:14px;margin-bottom:16px;}
+  .item-card{
+    background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px 20px;
+    backdrop-filter:blur(12px);
+  }
+  .item-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .item-card-head .idx{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);}
+  .item-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+  .item-grid .full{grid-column:1/-1;}
+  .item-field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:7px;}
+  .item-field input, .item-field textarea{
+    width:100%;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;color:var(--ink);font-size:13px;font-family:var(--body);resize:vertical;
+  }
+  .item-field textarea{min-height:64px;}
+  .item-field input:focus, .item-field textarea:focus{outline:none;border-color:var(--cyan);background:rgba(57,230,255,.05);}
+
+  .add-item-btn{
+    font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--cyan);
+    background:rgba(57,230,255,.06);border:1px dashed rgba(57,230,255,.4);border-radius:12px;
+    padding:13px;width:100%;cursor:pointer;transition:background .2s,border-color .2s;
+  }
+  .add-item-btn:hover{background:rgba(57,230,255,.12);}
+  .section-actions{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap;}
+  .btn-save{
+    font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#fff;
+    background:linear-gradient(120deg,var(--blue),var(--purple));border:none;border-radius:999px;
+    padding:11px 22px;cursor:pointer;transition:transform .2s,box-shadow .2s;
+    box-shadow:0 10px 30px -12px rgba(80,110,255,.65);
+  }
+  .btn-save:hover{transform:translateY(-2px);}
+  .btn-save:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+  .toast{
+    position:fixed;bottom:24px;right:24px;z-index:100;font-family:var(--mono);font-size:12.5px;
+    background:rgba(15,20,38,.9);border:1px solid var(--line-strong);border-radius:12px;padding:13px 20px;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.7);opacity:0;transform:translateY(10px);transition:opacity .3s,transform .3s;
+    pointer-events:none;
+  }
+  .toast.show{opacity:1;transform:translateY(0);}
+
+  ::-webkit-scrollbar{height:8px;width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN GATE ============ -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="brand-hud">
+      <div class="mark">JG</div>
+      <div>TechVerse<small>2026 — Admin Access</small></div>
+    </div>
+    <h1>Admin sign in</h1>
+    <p class="sub">Sign in to review registrations, verify payments and track arena numbers.</p>
+    <div class="gate-msg" id="gateMsg"></div>
+    <form id="gateForm" novalidate>
+      <div class="field" id="f-user">
+        <label>Admin username</label>
+        <input type="text" id="gateUser" autocomplete="username" placeholder="admin">
+      </div>
+      <div class="field" id="f-pass">
+        <label>Password</label>
+        <input type="password" id="gatePass" autocomplete="current-password" placeholder="Your admin password">
+      </div>
+      <button type="submit" class="btn btn-primary" id="gateSubmit">Sign in</button>
+    </form>
+    <p class="gate-note">Signs in against the <b>admins</b> table in your database — use the username/password stored there (currently <b>admin</b> / <b>Admin@techverse2026</b>).</p>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="dash">
+  <header class="top">
+    <div class="brand-hud">
+      <div class="mark">JG</div>
+      <div>TechVerse<small>2026 — Admin Dashboard</small></div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="refreshBtn">↻ Refresh</button>
+      <button class="icon-btn" id="exportBtn">⤓ Export CSV</button>
+      <button class="icon-btn danger" id="logoutBtn">Log out</button>
+    </div>
+  </header>
+
+  <main class="dash-main">
+    <div class="main-tabs">
+      <button class="main-tab active" data-tab="registrations">Registrations</button>
+      <button class="main-tab" data-tab="content">Site content</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-registrations">
+      <div class="stat-grid" id="statGrid"></div>
+      <div class="arena-stat-grid" id="arenaStatGrid"></div>
+
+      <div class="toolbar">
+        <div class="left">
+          <input type="text" class="search-input" id="searchInput" placeholder="Search by name, email, phone or team ID…">
+          <select class="filter" id="arenaFilter">
+            <option value="">All arenas</option>
+          </select>
+          <select class="filter" id="statusFilter">
+            <option value="">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="verified">Verified</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Team lead</th>
+              <th>Contact</th>
+              <th>Arena</th>
+              <th>Team</th>
+              <th>Payment ID</th>
+              <th>Registered</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display:none;">
+          <div class="big">No registrations yet</div>
+          Once students register through the portal, they'll show up here.
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-content">
+      <p class="content-intro">Fill these in once and they'll appear automatically on the Competitions, Sponsors, Workshops and Contact &amp; About pages — no need to edit those files by hand. Each section saves independently.</p>
+
+      <div class="subtabs" id="contentSubtabs"></div>
+      <div id="contentSections"></div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* Point this at the folder where you uploaded the php/ files, e.g. "/php" or "https://yourdomain.com/php" */
+var API_BASE = "php";
+
+var ARENAS = [
+  { id:"trading",  name:"Trading Arena",              accent:"#2f6bff" },
+  { id:"robotics", name:"Robotics Arena",              accent:"#8b5cf6" },
+  { id:"drone",    name:"Drone Fest",                  accent:"#22d3ee" },
+  { id:"startup",  name:"Startup & Innovation Expo",   accent:"#a78bfa" },
+  { id:"coding",   name:"Coding Challenge",             accent:"#39e6ff" },
+  { id:"ai",       name:"AI Model Building",            accent:"#6366f1" }
+];
+function arenaLookup(id){ return ARENAS.filter(function(a){ return a.id===id; })[0] || null; }
+
+var $ = function(id){ return document.getElementById(id); };
+var allRecords = [];
+
+async function apiCall(endpoint, payload){
+  var opts = { credentials: "include" };
+  if(payload){
+    opts.method = "POST";
+    opts.headers = { "Content-Type": "application/json" };
+    opts.body = JSON.stringify(payload);
+  }
+  var res = await fetch(API_BASE + "/" + endpoint, opts);
+  var data = null;
+  try{ data = await res.json(); }catch(e){ /* non-JSON response */ }
+  if(!data) throw new Error("Unexpected server response.");
+  return data;
+}
+
+/* ---------------- login gate ---------------- */
+var gateForm = $("gateForm"), gateMsg = $("gateMsg");
+
+/* If a session is already active (page reload), skip straight to the dashboard */
+(async function checkExistingSession(){
+  try{
+    var status = await apiCall("admin_check.php");
+    if(status.loggedIn){
+      $("gate").style.display = "none";
+      $("dash").classList.add("active");
+      loadRegistrations();
+    }
+  }catch(e){ /* not logged in / server unreachable — stay on the login gate */ }
+})();
+
+gateForm.addEventListener("submit", async function(e){
+  e.preventDefault();
+  gateMsg.className = "gate-msg";
+  var user = $("gateUser").value.trim();
+  var pass = $("gatePass").value;
+  var submitBtn = $("gateSubmit");
+  submitBtn.disabled = true; submitBtn.innerHTML = '<span class="loading-dot"></span> Checking…';
+
+  try{
+    var data = await apiCall("admin_login.php", { username: user, password: pass });
+    if(data.success){
+      $("gate").style.display = "none";
+      $("dash").classList.add("active");
+      loadRegistrations();
+    }else{
+      gateMsg.textContent = data.message || "Incorrect username or password.";
+      gateMsg.className = "gate-msg show";
+      $("f-user").classList.add("invalid");
+      $("f-pass").classList.add("invalid");
+    }
+  }catch(err){
+    gateMsg.textContent = "Couldn't reach the server. Check the API_BASE path in this page's script.";
+    gateMsg.className = "gate-msg show";
+  }finally{
+    submitBtn.disabled = false; submitBtn.textContent = "Sign in";
+  }
+});
+
+$("logoutBtn").addEventListener("click", async function(){
+  try{ await apiCall("admin_logout.php", {}); }catch(e){ /* ignore */ }
+  $("dash").classList.remove("active");
+  $("gate").style.display = "flex";
+  $("gateUser").value = ""; $("gatePass").value = "";
+});
+
+/* ---------------- toast ---------------- */
+var toastTimer = null;
+function toast(msg){
+  var t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2400);
+}
+
+/* ---------------- arena filter options ---------------- */
+var arenaFilter = $("arenaFilter");
+ARENAS.forEach(function(a){
+  var o = document.createElement("option");
+  o.value = a.id; o.textContent = a.name;
+  arenaFilter.appendChild(o);
+});
+
+/* ---------------- data loading ---------------- */
+async function loadRegistrations(){
+  try{
+    var data = await apiCall("admin_list.php");
+    if(!data.success){ toast(data.message || "Couldn't load registrations."); render(); return; }
+    allRecords = data.students;
+    render();
+  }catch(err){
+    toast("Couldn't load registrations. Try refreshing.");
+    render();
+  }
+}
+
+$("refreshBtn").addEventListener("click", function(){ loadRegistrations(); toast("Refreshed"); });
+
+/* ---------------- stats ---------------- */
+function renderStats(records){
+  var total = records.length;
+  var totalMembers = records.reduce(function(sum,r){ return sum + 1 + (r.team_members ? r.team_members.length : 0); }, 0);
+  var verified = records.filter(function(r){ return r.status === "verified"; }).length;
+  var pending = total - verified;
+
+  var statGrid = $("statGrid");
+  statGrid.innerHTML = "";
+  [
+    ["Total registrations", total, ""],
+    ["Total participants", totalMembers, "incl. team members"],
+    ["Payments verified", verified, ""],
+    ["Pending review", pending, ""]
+  ].forEach(function(s){
+    var d = document.createElement("div");
+    d.className = "stat-card";
+    d.innerHTML = '<div class="k">'+s[0]+'</div><div class="v">'+s[1]+(s[2]?' <small>'+s[2]+'</small>':'')+'</div>';
+    statGrid.appendChild(d);
+  });
+
+  var arenaGrid = $("arenaStatGrid");
+  arenaGrid.innerHTML = "";
+  ARENAS.forEach(function(a){
+    var count = records.filter(function(r){ return r.arena === a.id; }).length;
+    var d = document.createElement("div");
+    d.className = "arena-stat";
+    d.style.setProperty("--dotc", a.accent);
+    d.innerHTML = '<div class="name">'+a.name+'</div><div class="count">'+count+'</div>';
+    arenaGrid.appendChild(d);
+  });
+}
+
+/* ---------------- table ---------------- */
+function matchesFilters(r, q, arena, status){
+  if(arena && r.arena !== arena) return false;
+  if(status && r.status !== status) return false;
+  if(q){
+    var hay = (r.full_name + " " + r.email + " " + r.phone + " " + r.team_id + " " + r.enrollment_no).toLowerCase();
+    if(hay.indexOf(q.toLowerCase()) === -1) return false;
+  }
+  return true;
+}
+
+function renderTable(records){
+  var tbody = $("tableBody");
+  tbody.innerHTML = "";
+  var empty = $("emptyState");
+
+  if(records.length === 0){
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+
+  records.forEach(function(r){
+    var arena = arenaLookup(r.arena);
+    var tr = document.createElement("tr");
+
+    var teamSize = 1 + (r.team_members ? r.team_members.length : 0);
+    var memberList = (r.team_members && r.team_members.length) ? r.team_members.join(", ") : "No additional members";
+    var dateStr = new Date(r.created_at).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"});
+
+    tr.innerHTML =
+      '<td><div class="cell-name">'+escapeHtml(r.full_name)+'</div><div class="cell-sub">'+escapeHtml(r.team_id)+'</div></td>' +
+      '<td><div>'+escapeHtml(r.email)+'</div><div class="cell-sub">'+escapeHtml(r.phone)+'</div></td>' +
+      '<td><span class="arena-pill" style="--dotc:'+(arena?arena.accent:'#888')+'"><span class="dot"></span>'+(arena?arena.name:r.arena)+'</span></td>' +
+      '<td><div class="team-pill">'+teamSize+' member'+(teamSize>1?'s':'')+'</div><div class="cell-sub" style="max-width:180px;white-space:normal;">'+escapeHtml(memberList)+'</div></td>' +
+      '<td class="cell-sub" style="font-family:var(--mono);color:var(--ink);">'+escapeHtml(r.payment_id)+'</td>' +
+      '<td class="cell-sub">'+dateStr+'</td>' +
+      '<td></td>' +
+      '<td></td>';
+
+    var statusTd = tr.children[6];
+    var statusBtn = document.createElement("button");
+    statusBtn.className = "status-toggle " + (r.status === "verified" ? "verified" : "pending");
+    statusBtn.textContent = r.status === "verified" ? "Verified" : "Pending";
+    statusBtn.addEventListener("click", function(){ toggleStatus(r); });
+    statusTd.appendChild(statusBtn);
+
+    var actionsTd = tr.children[7];
+    var actionsWrap = document.createElement("div");
+    actionsWrap.className = "row-actions";
+    var delBtn = document.createElement("button");
+    delBtn.className = "mini-btn danger";
+    delBtn.textContent = "Delete";
+    delBtn.addEventListener("click", function(){ deleteRecord(r); });
+    actionsWrap.appendChild(delBtn);
+    actionsTd.appendChild(actionsWrap);
+
+    tbody.appendChild(tr);
+  });
+}
+
+function escapeHtml(str){
+  return String(str == null ? "" : str).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+  });
+}
+
+async function toggleStatus(record){
+  var newStatus = record.status === "verified" ? "pending" : "verified";
+  try{
+    var data = await apiCall("admin_update_status.php", { id: record.id, status: newStatus });
+    if(!data.success){ toast(data.message || "Couldn't update status."); return; }
+    record.status = newStatus;
+    toast(record.full_name + "'s payment marked " + newStatus + ".");
+    render();
+  }catch(err){
+    toast("Couldn't update status. Try again.");
+  }
+}
+
+async function deleteRecord(record){
+  if(!confirm("Remove " + record.full_name + "'s registration? This can't be undone.")) return;
+  try{
+    var data = await apiCall("admin_delete.php", { id: record.id });
+    if(!data.success){ toast(data.message || "Couldn't delete this registration."); return; }
+    allRecords = allRecords.filter(function(r){ return r.id !== record.id; });
+    render();
+    toast("Registration removed.");
+  }catch(err){
+    toast("Couldn't delete this registration.");
+  }
+}
+
+/* ---------------- export ---------------- */
+$("exportBtn").addEventListener("click", function(){
+  if(allRecords.length === 0){ toast("Nothing to export yet."); return; }
+  var header = ["Name","Phone","Email","Address","Enrollment No","Course","Arena","Team Members","Team Size","Payment ID","Team ID","Status","Registered At"];
+  var rows = allRecords.map(function(r){
+    var arena = arenaLookup(r.arena);
+    return [
+      r.full_name, r.phone, r.email, r.address, r.enrollment_no, r.course, arena ? arena.name : r.arena,
+      (r.team_members||[]).join(" | "), 1+(r.team_members?r.team_members.length:0),
+      r.payment_id, r.team_id, r.status, r.created_at
+    ];
+  });
+  var csv = [header].concat(rows).map(function(row){
+    return row.map(function(cell){
+      var v = String(cell == null ? "" : cell).replace(/"/g,'""');
+      return '"' + v + '"';
+    }).join(",");
+  }).join("\n");
+  var blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = "techverse-2026-registrations.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast("CSV exported.");
+});
+
+/* ---------------- search / filter wiring ---------------- */
+$("searchInput").addEventListener("input", render);
+arenaFilter.addEventListener("change", render);
+$("statusFilter").addEventListener("change", render);
+
+function render(){
+  var q = $("searchInput").value.trim();
+  var arena = arenaFilter.value;
+  var status = $("statusFilter").value;
+  var filtered = allRecords.filter(function(r){ return matchesFilters(r, q, arena, status); });
+  renderStats(allRecords);
+  renderTable(filtered);
+}
+
+/* ---------------- main tab switching ---------------- */
+document.querySelectorAll(".main-tab").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    document.querySelectorAll(".main-tab").forEach(function(b){ b.classList.remove("active"); });
+    document.querySelectorAll(".tab-panel").forEach(function(p){ p.classList.remove("active"); });
+    btn.classList.add("active");
+    $("tab-" + btn.dataset.tab).classList.add("active");
+    if(btn.dataset.tab === "content" && !contentLoaded){ loadContent(); }
+  });
+});
+
+/* =========================================================================
+   SITE CONTENT MANAGER
+   Feeds competitions.html, sponsors.html, workshops.html and contact.html.
+   Backed by php/content_get.php (read, public) and php/content_save.php
+   (write, requires the same admin session as the other admin_*.php calls).
+   ========================================================================= */
+var CONTENT_SCHEMA = {
+  competitions: {
+    label: "Competitions", type: "list", itemName: "Competition",
+    fields: [
+      { key:"title", label:"Competition name", type:"text", full:true },
+      { key:"arena", label:"Arena", type:"text" },
+      { key:"format", label:"Format", type:"text" },
+      { key:"eligibility", label:"Eligibility", type:"text" },
+      { key:"prize", label:"Prize / reward", type:"text" },
+      { key:"rules_url", label:"Rulebook link", type:"text" },
+      { key:"register_url", label:"Registration link", type:"text" },
+      { key:"description", label:"Short description", type:"textarea", full:true }
+    ]
+  },
+  sponsor_tiers: {
+    label: "Sponsor tiers", type: "list", itemName: "Tier",
+    fields: [
+      { key:"tier", label:"Tier name", type:"text" },
+      { key:"contribution", label:"Contribution / price", type:"text" },
+      { key:"benefits", label:"Benefits (one per line)", type:"textarea", full:true }
+    ]
+  },
+  sponsors: {
+    label: "Sponsors", type: "list", itemName: "Sponsor",
+    fields: [
+      { key:"name", label:"Sponsor name", type:"text" },
+      { key:"tier", label:"Tier", type:"text" },
+      { key:"logo_url", label:"Logo image URL", type:"text" },
+      { key:"website_url", label:"Website link", type:"text" }
+    ]
+  },
+  workshops: {
+    label: "Workshops", type: "list", itemName: "Workshop",
+    fields: [
+      { key:"title", label:"Workshop title", type:"text", full:true },
+      { key:"speaker", label:"Speaker / mentor", type:"text" },
+      { key:"track", label:"Track", type:"text" },
+      { key:"when", label:"Date & time", type:"text" },
+      { key:"seats", label:"Seats", type:"text" },
+      { key:"register_url", label:"Registration link", type:"text" },
+      { key:"description", label:"Short description", type:"textarea", full:true }
+    ]
+  },
+  about: {
+    label: "About us", type: "single", itemName: "About",
+    fields: [
+      { key:"heading", label:"Heading", type:"text", full:true },
+      { key:"body", label:"About us copy", type:"textarea", full:true }
+    ]
+  },
+  contact_details: {
+    label: "Contact details", type: "list", itemName: "Detail",
+    fields: [
+      { key:"label", label:"Label (e.g. Email, Phone, Address)", type:"text" },
+      { key:"value", label:"Value", type:"text" }
+    ]
+  },
+  coordinators: {
+    label: "Coordinators", type: "list", itemName: "Coordinator",
+    fields: [
+      { key:"name", label:"Name", type:"text" },
+      { key:"role", label:"Role / arena", type:"text" },
+      { key:"email", label:"Email", type:"text" },
+      { key:"phone", label:"Phone", type:"text" }
+    ]
+  }
+};
+var CONTENT_ORDER = ["competitions","sponsor_tiers","sponsors","workshops","about","contact_details","coordinators"];
+
+var contentData = {};
+var contentLoaded = false;
+var contentDirty = {};
+
+function emptyItem(fields){
+  var o = {};
+  fields.forEach(function(f){ o[f.key] = ""; });
+  return o;
+}
+
+function buildContentTabs(){
+  var subtabs = $("contentSubtabs");
+  var sections = $("contentSections");
+  subtabs.innerHTML = "";
+  sections.innerHTML = "";
+  CONTENT_ORDER.forEach(function(key, i){
+    var schema = CONTENT_SCHEMA[key];
+    var tabBtn = document.createElement("button");
+    tabBtn.className = "subtab" + (i === 0 ? " active" : "");
+    tabBtn.textContent = schema.label;
+    tabBtn.dataset.section = key;
+    tabBtn.addEventListener("click", function(){
+      document.querySelectorAll(".subtab").forEach(function(b){ b.classList.remove("active"); });
+      document.querySelectorAll(".content-section").forEach(function(p){ p.classList.remove("active"); });
+      tabBtn.classList.add("active");
+      $("section-" + key).classList.add("active");
+    });
+    subtabs.appendChild(tabBtn);
+
+    var panel = document.createElement("div");
+    panel.className = "content-section" + (i === 0 ? " active" : "");
+    panel.id = "section-" + key;
+    panel.innerHTML =
+      '<div class="section-head">' +
+        '<div><h2>' + schema.label + '</h2><p>' + (schema.type === "single"
+          ? "This is a single block of copy — edit it and save."
+          : "Add, edit or remove as many " + schema.itemName.toLowerCase() + " cards as you need. Order here is the order they'll appear on the page.") + '</p></div>' +
+        '<span class="section-status" id="status-' + key + '">Not yet saved</span>' +
+      '</div>' +
+      '<div class="item-list" id="list-' + key + '"></div>' +
+      (schema.type === "list" ? '<button type="button" class="add-item-btn" id="add-' + key + '">+ Add ' + schema.itemName.toLowerCase() + '</button>' : '') +
+      '<div class="section-actions">' +
+        '<button type="button" class="btn-save" id="save-' + key + '">Save &amp; publish</button>' +
+      '</div>';
+    sections.appendChild(panel);
+
+    if(schema.type === "list"){
+      $("add-" + key).addEventListener("click", function(){
+        contentData[key] = contentData[key] || [];
+        contentData[key].push(emptyItem(schema.fields));
+        markDirty(key);
+        renderSection(key);
+      });
+    }
+    $("save-" + key).addEventListener("click", function(){ saveSection(key); });
+  });
+}
+
+function markDirty(key){
+  contentDirty[key] = true;
+  var s = $("status-" + key);
+  s.textContent = "Unsaved changes";
+  s.className = "section-status dirty";
+}
+
+function fieldControl(field, value, onChange){
+  var wrap = document.createElement("div");
+  wrap.className = "item-field" + (field.full ? " full" : "");
+  var label = document.createElement("label");
+  label.textContent = field.label;
+  wrap.appendChild(label);
+  var input = document.createElement(field.type === "textarea" ? "textarea" : "input");
+  if(field.type !== "textarea") input.type = "text";
+  input.value = value || "";
+  input.placeholder = field.label;
+  input.addEventListener("input", function(){ onChange(input.value); });
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function renderSection(key){
+  var schema = CONTENT_SCHEMA[key];
+  var list = $("list-" + key);
+  list.innerHTML = "";
+
+  if(schema.type === "single"){
+    contentData[key] = contentData[key] || emptyItem(schema.fields);
+    var card = document.createElement("div");
+    card.className = "item-card";
+    var grid = document.createElement("div");
+    grid.className = "item-grid";
+    schema.fields.forEach(function(f){
+      grid.appendChild(fieldControl(f, contentData[key][f.key], function(v){
+        contentData[key][f.key] = v;
+        markDirty(key);
+      }));
+    });
+    card.appendChild(grid);
+    list.appendChild(card);
+    return;
+  }
+
+  contentData[key] = contentData[key] || [];
+  if(contentData[key].length === 0){
+    var empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.innerHTML = '<div class="big">Nothing added yet</div>Click "Add ' + schema.itemName.toLowerCase() + '" below to create the first one.';
+    list.appendChild(empty);
+    return;
+  }
+
+  contentData[key].forEach(function(item, idx){
+    var card = document.createElement("div");
+    card.className = "item-card";
+
+    var head = document.createElement("div");
+    head.className = "item-card-head";
+    var idxLabel = document.createElement("span");
+    idxLabel.className = "idx";
+    idxLabel.textContent = schema.itemName + " " + (idx + 1);
+    head.appendChild(idxLabel);
+    var delBtn = document.createElement("button");
+    delBtn.className = "mini-btn danger";
+    delBtn.type = "button";
+    delBtn.textContent = "Remove";
+    delBtn.addEventListener("click", function(){
+      contentData[key].splice(idx, 1);
+      markDirty(key);
+      renderSection(key);
+    });
+    head.appendChild(delBtn);
+    card.appendChild(head);
+
+    var grid = document.createElement("div");
+    grid.className = "item-grid";
+    schema.fields.forEach(function(f){
+      grid.appendChild(fieldControl(f, item[f.key], function(v){
+        item[f.key] = v;
+        markDirty(key);
+      }));
+    });
+    card.appendChild(grid);
+    list.appendChild(card);
+  });
+}
+
+async function loadContent(){
+  buildContentTabs();
+  try{
+    var data = await apiCall("content_get.php");
+    if(data && data.success && data.content){
+      contentData = data.content;
+    }
+  }catch(err){
+    toast("Couldn't load site content — showing empty forms.");
+  }
+  contentLoaded = true;
+  CONTENT_ORDER.forEach(function(key){ renderSection(key); });
+}
+
+async function saveSection(key){
+  var btn = $("save-" + key);
+  var status = $("status-" + key);
+  btn.disabled = true;
+  var prevLabel = btn.textContent;
+  btn.textContent = "Saving…";
+  try{
+    var data = await apiCall("content_save.php", { section: key, data: contentData[key] });
+    if(!data.success){
+      toast(data.message || "Couldn't save — try again.");
+      return;
+    }
+    contentDirty[key] = false;
+    status.textContent = "Saved — live on the site";
+    status.className = "section-status saved";
+    toast(CONTENT_SCHEMA[key].label + " published.");
+  }catch(err){
+    toast("Couldn't reach the server. Check the API_BASE path.");
+  }finally{
+    btn.disabled = false;
+    btn.textContent = prevLabel;
+  }
+}
+
+render();
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>JG TechVerse 2026 — The Arena Universe</title>
+<meta name="description" content="Fly through the six TechVerse 2026 arenas in an immersive 3D experience.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#03040a;
+    --glass:rgba(6,9,22,.82);
+    --glass-soft:rgba(6,9,22,.6);
+    --line:rgba(160,185,255,.22);
+    --ink:#ffffff;
+    --ink-dim:#c3ccec;
+    --blue:#2f6bff;
+    --cyan:#39e6ff;
+    --purple:#8b5cf6;
+    --violet:#a78bfa;
+    --indigo:#6366f1;
+    --white:#ffffff;
+    --text-shadow-soft:0 2px 4px rgba(0,0,0,.7), 0 8px 30px rgba(0,0,0,.75);
+    --disp:'Orbitron', sans-serif;
+    --body:'Inter', sans-serif;
+    --mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);color:var(--ink);font-family:var(--body);overflow-x:hidden;}
+  html{scroll-behavior:auto;}
+  a{color:inherit;text-decoration:none;}
+  ::selection{background:var(--cyan);color:#04060d;}
+  button{font-family:inherit;cursor:pointer;}
+
+  #bgCanvas{position:fixed;inset:0;z-index:0;display:block;}
+  #scrim{
+    position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(2,3,8,.55) 0%, rgba(2,3,8,.15) 18%, rgba(2,3,8,.15) 82%, rgba(2,3,8,.6) 100%),
+      radial-gradient(120% 90% at 50% 100%, rgba(2,3,8,.35), transparent 60%);
+  }
+
+  #scrollTrack{position:relative;z-index:2;}
+  .panel-section{
+    min-height:150vh;position:relative;display:flex;align-items:center;
+    padding:0 clamp(20px,6vw,90px);
+  }
+  #hero{min-height:100vh;}
+  #outro{min-height:110vh;}
+
+  /* ---------------- cinematic video intro ---------------- */
+  html.intro-lock, html.intro-lock body{
+    overflow:hidden !important;height:100%;overscroll-behavior:none;
+  }
+  /* Everything the visitor must not see/touch while the intro plays.
+     visibility:hidden (not display:none) so CSS-driven entrance animations
+     (header nav fade-in, cta fade-in) keep running to completion in the
+     background and are already in their final state the instant the
+     overlay is removed — no re-trigger/replay logic required. */
+  html.intro-lock .site-header,
+  html.intro-lock .motion-toggle,
+  html.intro-lock #scrollTrack,
+  html.intro-lock #bgCanvas,
+  html.intro-lock #scrim{
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+
+  #introOverlay{
+    position:fixed;inset:0;z-index:3000;background:#000;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+    transition:opacity .9s cubic-bezier(.22,1,.36,1);
+  }
+  #introOverlay.intro-fade-out{opacity:0;pointer-events:none;}
+  #introVideo{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:cover;object-position:center;background:#000;
+    border:0;outline:none;display:block;
+  }
+  /* subtle cinematic vignette/grade over the raw footage — the thing that
+     keeps it from reading as "a video tag" and more as "the site itself" */
+  #introVignette{
+    position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(120% 90% at 50% 100%, rgba(0,0,0,.4), transparent 60%),
+      radial-gradient(120% 90% at 50% 0%, rgba(0,0,0,.35), transparent 55%),
+      linear-gradient(180deg, rgba(0,0,0,.2) 0%, transparent 16%, transparent 84%, rgba(0,0,0,.45) 100%);
+  }
+  .intro-skip-hint{
+    position:fixed;bottom:22px;right:22px;z-index:3001;
+    font-family:var(--disp);font-weight:500;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--white);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.22);
+    backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);
+    padding:9px 16px;border-radius:999px;pointer-events:none;
+    opacity:0;transition:opacity .8s ease;
+  }
+  .intro-skip-hint.show{opacity:.5;}
+  @media (prefers-reduced-motion:reduce){
+    .intro-skip-hint{transition:none;}
+    #introOverlay{transition:opacity .3s linear;}
+  }
+
+  .home-link{
+    position:fixed;bottom:20px;left:20px;z-index:200;font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+    color:var(--ink-dim);border:1px solid var(--line);border-radius:999px;padding:9px 16px;
+    background:var(--glass);backdrop-filter:blur(10px);transition:color .2s,border-color .2s;
+  }
+  .home-link:hover{color:var(--cyan);border-color:var(--cyan);}
+
+  /* ---------------- reduced motion pill ---------------- */
+  .motion-toggle{
+    position:fixed;bottom:20px;right:20px;z-index:200;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;
+    color:var(--ink-dim);border:1px solid var(--line);border-radius:999px;padding:9px 14px;
+    background:var(--glass);backdrop-filter:blur(10px);transition:color .2s,border-color .2s;
+  }
+  .motion-toggle:hover, .motion-toggle:focus-visible{color:var(--cyan);border-color:var(--cyan);}
+  .motion-toggle[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);}
+
+  /* ---------------- site header ---------------- */
+  /*
+    ROOT-CAUSE FIX: backdrop-filter on a position:fixed element makes that
+    element the CONTAINING BLOCK for any of its own position:fixed
+    descendants (spec: filter/backdrop-filter/transform/will-change all do
+    this). That's why .header-nav (fixed, child of .site-header) was being
+    sized/positioned against the 88px-tall header box instead of the
+    viewport. Fix: keep .site-header itself filter-free, and render the
+    glass background on a ::before layer instead. .site-header no longer
+    establishes a containing block, so .header-nav's fixed positioning
+    resolves against the viewport again, while the visual blur is unchanged.
+  */
+  .site-header{
+    position:fixed;top:0;left:0;right:0;z-index:200;height:123px;
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr) auto;
+    grid-template-rows:100%;
+    align-items:center;column-gap:clamp(12px,2vw,32px);
+    padding:0 clamp(20px,4vw,48px);
+    overflow:hidden;
+    /* background:transparent; */
+    /* border-bottom:1px solid rgba(255,255,255,.08); */
+    /* opacity:0;animation:headerFadeIn .8s ease forwards;animation-delay:.15s; */
+    transition:box-shadow .4s ease;
+    isolation:isolate; /* keep the ::before's z-index:-1 scoped to this header, not the page */
+  }
+  .site-header::before{
+    content:"";position:absolute;inset:0;z-index:-1;
+    /* background:rgba(5,7,18,.35); */
+    /* backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%); */
+    /* transition:background .4s ease,backdrop-filter .4s ease; */
+  }
+  
+  
+  @keyframes headerFadeIn{to{opacity:1;}}
+
+  .header-brand{grid-column:1;grid-row:1;align-self:center;display:flex;align-items:center;gap:12px;min-width:0;}
+  .header-brand img.logo{height:102px;width:auto;}
+  .header-brand .brand-text{font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.08em;color:var(--ink);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .header-brand .brand-text small{display:block;font-family:var(--mono);font-weight:400;font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-top:2px;}
+
+  .header-nav{
+    /* Grid column 2 gives the nav its own reserved space between the brand
+       and CTA columns — it can never overlap them, at any header width.
+       (Previously this was position:absolute + left:50%, which centered
+       against the header's full width with no awareness of how wide the
+       brand/CTA actually were — that's what caused the overlap.) */
+    grid-column:2;grid-row:1;justify-self:center;min-width:0;max-width:100%;
+    display:flex;align-items:center;justify-content:center;gap:clamp(20px,3vw,44px);
+    overflow:hidden;
+  }
+  .header-nav a{
+    position:relative;font-family:var(--disp);font-weight:700;font-size:13px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink);padding:10px 2px;opacity:0;
+    transition:color .2s ease;animation:navItemIn .55s ease forwards;
+  }
+  .header-nav a:nth-child(1){animation-delay:.32s;}
+  .header-nav a:nth-child(2){animation-delay:.38s;}
+  .header-nav a:nth-child(3){animation-delay:.44s;}
+  .header-nav a:nth-child(4){animation-delay:.5s;}
+  .header-nav a:nth-child(5){animation-delay:.56s;}
+  @keyframes navItemIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+  .header-nav a::after{
+    content:"";position:absolute;left:50%;bottom:-2px;width:0;height:2px;
+    background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 0 8px var(--cyan);
+    transition:width .2s cubic-bezier(.22,1,.36,1),left .2s cubic-bezier(.22,1,.36,1);
+  }
+  .header-nav a:hover, .header-nav a:focus-visible{color:var(--violet);}
+  .header-nav a:hover::after, .header-nav a:focus-visible::after{left:0;width:100%;}
+  .header-nav a.active{color:var(--violet);}
+  .header-nav a.active::before{
+    content:"";position:absolute;left:50%;bottom:-11px;width:6px;height:6px;border-radius:50%;
+    background:var(--violet);box-shadow:0 0 10px var(--violet);transform:translateX(-50%);
+  }
+
+  .header-cta{
+    grid-column:3;grid-row:1;justify-self:end;align-self:center;position:relative;flex:0 0 auto;
+    opacity:0;transform:translateX(16px);
+    animation:ctaIn .6s cubic-bezier(.22,1,.36,1) forwards;animation-delay:.5s;
+  }
+  @keyframes ctaIn{to{opacity:1;transform:translateX(0);}}
+
+  .header-burger{grid-column:3;grid-row:1;justify-self:end;align-self:center;display:none;}
+
+  @media (max-width:1335px){
+    .header-nav{
+      /* Full-viewport drawer. inset:0 + width/height 100% covers the whole
+         screen (hero included) instead of just the header's box. Because
+         .site-header no longer creates a containing block (see fix above),
+         "fixed" here resolves against the real viewport. */
+      position:fixed;inset:0;left:auto;width:100%;height:100dvh;max-height:100dvh;
+      transform:translateX(100%);
+      flex-direction:column;justify-content:center;align-items:center;gap:28px;
+      padding:calc(env(safe-area-inset-top) + 100px) max(28px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 32px) max(28px,env(safe-area-inset-left));
+      background:rgba(4,6,14,.96);
+      backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%);
+      border-left:1px solid var(--line);
+      transition:transform .45s cubic-bezier(.22,1,.36,1);
+      overflow-y:auto;
+      z-index:220; /* above .site-header (200), below .header-burger (250) so the burger keeps working as the close control */
+    }
+    .header-nav.open{transform:translateX(0);}
+    .header-nav a{font-size:18px;opacity:1;animation:none;}
+    a.header-cta{display:none;}
+    .header-nav a.nav-cta-mobile{
+      display:inline-flex;margin-top:8px;
+    }
+    .header-burger{
+      display:flex;flex-direction:column;justify-content:center;gap:5px;
+      width:34px;height:34px;background:none;border:none;z-index:250;flex:0 0 auto;
+    }
+    .header-burger span{display:block;width:100%;height:2px;background:var(--ink);transition:transform .3s ease,opacity .3s ease;}
+    .header-burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+    .header-burger.open span:nth-child(2){opacity:0;}
+    .header-burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+  }
+  .header-nav .nav-cta-mobile{display:none;}
+  html.nav-open, html.nav-open body{overflow:hidden;height:100%;overscroll-behavior:none;}
+  @media (max-width:560px){
+    .header-brand .brand-text small{display:none;}
+  }
+
+
+
+  /* ---------------- hero ---------------- */
+  .eyebrow{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--cyan);
+    display:flex;align-items:center;gap:10px;margin-bottom:20px;opacity:0;
+    text-shadow:var(--text-shadow-soft);
+  }
+  .eyebrow::before{content:"";width:28px;height:1px;background:var(--cyan);}
+  .hero-inner{
+    max-width:850px;background:linear-gradient(165deg, rgba(4,6,14,.66), rgba(4,6,14,.32) 55%, rgba(4,6,14,.1));
+    border-radius:28px;padding:clamp(24px,4vw,44px);backdrop-filter:blur(6px);
+  }
+  h1.mega{
+    font-family:var(--disp);font-weight:900;text-transform:uppercase;
+    font-size:clamp(42px,8vw,104px);line-height:.98;letter-spacing:-.01em;margin:0 0 22px;
+    filter:drop-shadow(0 4px 26px rgba(0,0,0,.85)) drop-shadow(0 1px 4px rgba(0,0,0,.9));
+  }
+  h1.mega span{
+    display:block;overflow:hidden;
+  }
+  h1.mega span b{
+    display:inline-block;transform:translateY(110%);
+    background:linear-gradient(100deg,#fff 5%, var(--cyan) 40%, var(--purple) 75%, #fff 100%);
+    background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:gradientDrift 8s ease-in-out infinite;
+  }
+  @keyframes gradientDrift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+  .hero-sub{
+    font-size:clamp(15px,1.9vw,19px);line-height:1.7;color:var(--ink-dim);max-width:560px;margin-bottom:36px;opacity:0;
+    text-shadow:var(--text-shadow-soft);
+  }
+  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;opacity:0;}
+
+  /* ---------------- unified button system (single source of truth) ---------------- */
+  /* .btn = shared shape/type/motion. Pair with a variant (.btn-glow / .btn-outline / .btn-accent)
+     and optionally .btn-sm for compact placements. This is the only button ruleset on the site. */
+  .btn{
+    position:relative;display:inline-flex;align-items:center;gap:10px;
+    font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    padding:13px 26px;color:#fff;border:1px solid transparent;
+    clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);
+    transition:transform .2s cubic-bezier(.22,1,.36,1),box-shadow .2s cubic-bezier(.22,1,.36,1),
+      border-color .2s ease,color .2s ease,background .2s ease,filter .2s ease;
+  }
+  .btn:hover, .btn:focus-visible{transform:translateY(-2px) scale(1.03);}
+  .btn:active{transform:translateY(0) scale(.98);}
+  .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;}
+  .btn.disabled, .btn[aria-disabled="true"]{
+    background:none;color:var(--ink-dim);border-color:var(--line);box-shadow:none;
+    filter:none;pointer-events:none;transform:none;
+  }
+  .btn-sm{padding:10px 20px;font-size:11px;gap:6px;}
+
+  /* primary — the "Enter the Arena" reference look */
+  .btn-glow{
+    background:linear-gradient(135deg,var(--purple),var(--indigo) 55%,var(--blue));
+    border-color:rgba(167,139,250,.5);
+    box-shadow:0 0 0 1px rgba(167,139,250,.15) inset, 0 8px 26px -10px rgba(139,92,246,.65);
+  }
+  .btn-glow:hover, .btn-glow:focus-visible{
+    border-color:var(--violet);
+    box-shadow:0 0 0 1px rgba(167,139,250,.3) inset, 0 14px 34px -8px rgba(139,92,246,.9);
+  }
+
+  /* secondary — quiet glass outline */
+  .btn-outline{background:rgba(255,255,255,.03);color:var(--ink);border-color:var(--line);}
+  .btn-outline:hover, .btn-outline:focus-visible{border-color:var(--cyan);color:var(--cyan);
+    box-shadow:0 8px 26px -16px rgba(57,230,255,.6);}
+
+  /* accent — inherits each arena's own color (--dotc) so wayfinding colors stay intact */
+  .btn-accent{background:var(--dotc);color:#04060d;border-color:rgba(255,255,255,.25);
+    box-shadow:0 0 0 1px rgba(255,255,255,.12) inset, 0 8px 22px -12px var(--dotc);}
+  .btn-accent:hover, .btn-accent:focus-visible{border-color:#fff;filter:brightness(1.08);
+    box-shadow:0 0 0 1px rgba(255,255,255,.22) inset, 0 14px 28px -10px var(--dotc);}
+
+  .scroll-cue{
+    position:absolute;bottom:34px;left:clamp(20px,6vw,90px);display:flex;align-items:center;gap:10px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);opacity:0;
+    text-shadow:var(--text-shadow-soft);
+  }
+  .scroll-cue .line{width:1px;height:34px;background:linear-gradient(180deg,var(--cyan),transparent);animation:scrollPulse 1.8s ease-in-out infinite;}
+  @keyframes scrollPulse{0%,100%{opacity:.3;}50%{opacity:1;}}
+
+  /* ---------------- arena panel ---------------- */
+  .arena-panel{
+    max-width:460px;padding:32px 30px 30px;border-radius:20px;
+    background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(20px) saturate(150%);
+    opacity:0;transform:translateY(24px);transition:opacity .1s,transform .1s;
+    box-shadow:0 30px 70px -30px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .arena-panel.right{margin-left:auto;}
+  .arena-panel .idx{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--dotc);margin-bottom:14px;display:flex;align-items:center;gap:8px;text-shadow:var(--text-shadow-soft);}
+  .arena-panel .idx .sw{width:7px;height:7px;border-radius:50%;background:var(--dotc);box-shadow:0 0 8px var(--dotc);}
+  .arena-panel h2{font-family:var(--disp);font-weight:700;font-size:clamp(24px,3.4vw,34px);line-height:1.08;margin-bottom:12px;color:#fff;text-shadow:var(--text-shadow-soft);}
+  .arena-panel .coord{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);margin-bottom:16px;}
+  .arena-panel .coord b{color:var(--ink);}
+  .arena-panel p.desc{font-size:14.5px;line-height:1.7;color:var(--ink-dim);margin-bottom:22px;}
+  .arena-panel .row-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+  .arena-panel .stat-pill{
+    font-family:var(--mono);font-size:11px;color:var(--ink);border:1px dashed var(--line);border-radius:999px;
+    padding:8px 14px;
+  }
+
+  /* ---------------- outro ---------------- */
+  #outro .outro-inner{
+    max-width:640px;text-align:left;
+    background:linear-gradient(165deg, rgba(4,6,14,.66), rgba(4,6,14,.32) 55%, rgba(4,6,14,.1));
+    border-radius:28px;padding:clamp(24px,4vw,44px);backdrop-filter:blur(6px);
+  }
+  #outro h2{font-family:var(--disp);font-weight:900;font-size:clamp(32px,5.5vw,58px);line-height:1.04;margin-bottom:20px;text-transform:uppercase;
+    background:linear-gradient(100deg,#fff, var(--cyan), var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 26px rgba(0,0,0,.85));}
+  #outro p{font-size:16px;line-height:1.7;color:var(--ink-dim);margin-bottom:30px;max-width:520px;text-shadow:var(--text-shadow-soft);}
+
+  @media (max-width:760px){
+    .arena-panel{max-width:92vw;padding:24px 20px;}
+    .panel-section{min-height:130vh;}
+  }
+  .reduced #bgCanvas{opacity:.9;}
+</style>
+</head>
+<body>
+
+<div id="introOverlay" role="dialog" aria-modal="true" aria-label="TechVerse 2026 cinematic intro">
+  <video
+    id="introVideo"
+    src="Tech_intro.mp4"
+    autoplay
+    muted
+    playsinline
+    webkit-playsinline="true"
+    preload="auto"
+    disablePictureInPicture
+    disableRemotePlayback
+    controlsList="nodownload noplaybackrate nofullscreen noremoteplayback"
+    oncontextmenu="return false;"
+  ></video>
+  <div id="introVignette" aria-hidden="true"></div>
+  <div class="intro-skip-hint" id="introSkipHint" aria-hidden="true">Press ESC to skip</div>
+</div>
+
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<div id="scrim" aria-hidden="true"></div>
+
+<!-- <div class="brand-hud">
+  <div class="mark">JG</div>
+  <div>TechVerse<small>2026 — Arena Universe</small></div>
+</div> -->
+<header class="site-header" id="siteHeader">
+  <a href="jg-techverse-2026.html" class="header-brand" aria-label="TechVerse 2026 — home">
+    <img src="JG_Logo.png" alt="JG University logo" class="logo">
+  </a>
+
+  <nav class="header-nav" id="headerNav" aria-label="Primary">
+    <a href="jg-techverse-2026.html" class="active">Home</a>
+    <a href="competitions.html">Competitions</a>
+    <a href="sponsors.html">Sponsors</a>
+    <a href="workshops.html">Workshops</a>
+    <a href="contact.html">Contact</a>
+    <a href="#trading" class="header-cta nav-cta-mobile btn btn-glow" data-nav-link>Enter the Arena</a>
+  </nav>
+
+  <a href="#trading" class="header-cta btn btn-glow" data-nav-link>Enter the Arena</a>
+
+  <button class="header-burger" id="headerBurger" type="button" aria-label="Toggle menu" aria-expanded="false" aria-controls="headerNav">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<button class="motion-toggle" id="motionToggle" type="button" aria-pressed="false">
+  Reduced motion: Off
+</button>
+
+<main id="scrollTrack">
+
+  <section class="panel-section" id="hero">
+    <div class="hero-inner">
+      <span class="eyebrow" data-hero-el>JG University // August 2026</span>
+      <h1 class="mega">
+        <span><b data-hero-el>ENTER THE</b></span>
+        <span><b data-hero-el>TECHVERSE</b></span>
+      </h1>
+      <p class="hero-sub" data-hero-el>Six arenas. One universe. Scroll to fly through the AI, Trading, Robotics, Drone, Startup and Coding worlds of TechVerse 2026 — built and coordinated entirely by student teams.</p>
+      <div class="hero-actions" data-hero-el>
+        <a href="#trading" class="btn btn-glow" data-nav-link>Begin the flight ↓</a>
+        <a href="student-portal.html" class="btn btn-outline">Register / Student login</a>
+        <!-- <a href="ProblemStatements.html" class="btn btn-outline">Browse all problem statements</a> -->
+      </div>
+    </div>
+    <div class="scroll-cue" data-hero-el><span class="line"></span>Scroll to fly</div>
+  </section>
+
+  <!-- Arena sections injected by JS -->
+  <div id="arenaSections"></div>
+
+  <section class="panel-section" id="outro">
+    <div class="outro-inner">
+      <span class="eyebrow">Journey complete</span>
+      <h2>Ready to build your arena?</h2>
+      <p>You've flown past all six worlds of TechVerse 2026. Head back to the classic hub to register a team, view the full problem-statement archive, or open any coordinator's session deck directly.</p>
+      <div class="hero-actions" style="opacity:1;">
+        <a href="student-portal.html" class="btn btn-glow">Register / Student login</a>
+        <!-- <a href="admin-dashboard.html" class="btn btn-outline">Admin panel</a> -->
+        <!-- <a href="ProblemStatements.html" class="btn btn-outline">All problem statements</a> -->
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================================
+   DATA — six arenas, same identity as the classic hub, new colour system
+   ========================================================================= */
+var ARENAS = [
+  { id:"trading",  name:"Trading Arena",                 coord:"Mr. Mohit Kulhari",
+    accent:"#2f6bff", type:"trading",
+    desc:"Real-time trading simulations and financial-strategy competitions in a risk-free virtual market.",
+    stat:"16 project ideas", page:"Mohit.html",
+    world:[-7,0,-14], cam:[-3,2,-8] },
+  { id:"robotics", name:"Robotics Arena",                 coord:"Ms. Riddhi harsora & Ms. Namrata Brahmbhatt",
+    accent:"#8b5cf6", type:"robotics",
+    desc:"Design, build and demonstrate autonomous and manually controlled robots.",
+    stat:"5 project ideas", page:"Riddhi.html",
+    world:[8,0,-32], cam:[3,2,-26] },
+  { id:"drone",    name:"Drone Fest",                      coord:"Mr. Suryansh Rajput",
+    accent:"#22d3ee", type:"drone",
+    desc:"Flying demonstrations, racing and innovation challenges across unmanned aerial systems.",
+    stat:"12 project ideas", page:"Suryansh.html",
+    world:[-8,2,-50], cam:[-3,3,-44] },
+  { id:"startup",  name:"Startup & Innovation Expo",        coord:"Mr. Deep Paun & Mr. Harsh Bhojak",
+    accent:"#a78bfa", type:"startup",
+    desc:"Student startups, prototypes and research projects presented to industry experts and investors.",
+    stat:"10 open problem statements", page:"Harsh.html",
+    world:[8,0,-68], cam:[3,2,-62] },
+  { id:"coding",   name:"Coding Challenge",                 coord:"Mr. Brijesh Munjiyasara & Ms. Shreya Verma",
+    accent:"#39e6ff", type:"coding",
+    desc:"Competitive programming, hackathons, debugging challenges and software development contests.",
+    stat:"5 project ideas", page:"Brijesh.html",
+    world:[-7,0,-86], cam:[-3,2,-80] },
+  { id:"ai",       name:"AI Model Building",                coord:"Mr. Aniket Mittal",
+    accent:"#6366f1", type:"ai",
+    desc:"Machine Learning, Deep Learning and Generative AI applications solving real-world problems.",
+    stat:"6 project tracks", page:"Aniket.html",
+    world:[8,1,-104], cam:[3,3,-98] }
+];
+
+var HERO_KF  = { pos:[0,1.5,20],  look:[0,0,0] };
+var OUTRO_KF = { pos:[0,4,-122],  look:[0,0,-128] };
+
+/* Full camera keyframe path: hero -> six arenas -> outro */
+var KF = [HERO_KF].concat(ARENAS.map(function(a){ return {pos:a.cam, look:a.world}; })).concat([OUTRO_KF]);
+
+var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var isMobile = window.innerWidth < 780;
+
+/* =========================================================================
+   BUILD DOM — arena sections + hud nav (data-driven, mirrors the hub)
+   ========================================================================= */
+function buildArenaSections(){
+  var wrap = document.getElementById("arenaSections");
+  var html = "";
+  ARENAS.forEach(function(a, i){
+    var alignRight = (i % 2 === 1);
+    var enterBtn = a.page
+      ? '<a href="'+a.page+'" class="enter-btn btn btn-accent btn-sm">Enter arena ↗</a>'
+      : '<span class="enter-btn btn btn-accent btn-sm disabled">Deck coming soon</span>';
+    html += ''+
+    '<section class="panel-section" id="'+a.id+'" data-arena="'+a.id+'" style="--dotc:'+a.accent+'">'+
+      '<div class="arena-panel'+(alignRight?' right':'')+'" data-panel="'+a.id+'">'+
+        '<div class="idx"><span class="sw"></span>ARENA 0'+(i+1)+' // '+String(a.stat).toUpperCase()+'</div>'+
+        '<h2>'+a.name+'</h2>'+
+        '<div class="coord">Coordinator — <b>'+a.coord+'</b></div>'+
+        '<p class="desc">'+a.desc+'</p>'+
+        '<div class="row-actions">'+
+          '<span class="stat-pill">'+a.stat+'</span>'+
+          enterBtn+
+        '</div>'+
+      '</div>'+
+    '</section>';
+  });
+  wrap.innerHTML = html;
+}
+buildArenaSections();
+
+/* =========================================================================
+   THREE.JS SCENE
+   ========================================================================= */
+var canvas = document.getElementById("bgCanvas");
+var renderer = new THREE.WebGLRenderer({ canvas:canvas, antialias:true, alpha:false, powerPreference:"high-performance" });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x04060d, 1);
+
+var scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x04060d, 0.014);
+
+var camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 400);
+camera.position.set.apply(camera.position, HERO_KF.pos);
+
+var ambient = new THREE.AmbientLight(0x2a3466, 1.1);
+scene.add(ambient);
+var headlight = new THREE.PointLight(0x8fb2ff, 1.4, 40, 2);
+camera.add(headlight);
+scene.add(camera);
+
+/* ---------- bloom (guarded — falls back to plain render if unavailable) ---------- */
+var composer = null;
+try{
+  if (THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass){
+    composer = new THREE.EffectComposer(renderer);
+    composer.addPass(new THREE.RenderPass(scene, camera));
+    var bloom = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight),
+      isMobile ? 0.55 : 0.85, 0.55, 0.22);
+    composer.addPass(bloom);
+  }
+}catch(e){ composer = null; }
+
+/* ---------- starfield ---------- */
+function makeStarfield(){
+  var count = isMobile ? 1400 : 3200;
+  var geo = new THREE.BufferGeometry();
+  var pos = new Float32Array(count*3);
+  var col = new Float32Array(count*3);
+  var palette = [[0.6,0.75,1],[0.4,0.9,1],[0.7,0.55,1],[1,1,1]];
+  for(var i=0;i<count;i++){
+    pos[i*3]   = (Math.random()-0.5)*140;
+    pos[i*3+1] = (Math.random()-0.5)*80;
+    pos[i*3+2] = (Math.random())*-160 + 30;
+    var c = palette[(Math.random()*palette.length)|0];
+    col[i*3]=c[0]; col[i*3+1]=c[1]; col[i*3+2]=c[2];
+  }
+  geo.setAttribute("position", new THREE.BufferAttribute(pos,3));
+  geo.setAttribute("color", new THREE.BufferAttribute(col,3));
+  var mat = new THREE.PointsMaterial({ size:0.5, vertexColors:true, transparent:true, opacity:0.85, depthWrite:false, blending:THREE.AdditiveBlending });
+  var pts = new THREE.Points(geo, mat);
+  scene.add(pts);
+  return pts;
+}
+var starfield = makeStarfield();
+
+/* ---------- nebula (procedural canvas sprites, no external assets) ---------- */
+function nebulaTexture(hex){
+  var c = document.createElement("canvas"); c.width=c.height=256;
+  var ctx = c.getContext("2d");
+  var grd = ctx.createRadialGradient(128,128,0,128,128,128);
+  grd.addColorStop(0, hex + "aa");
+  grd.addColorStop(0.5, hex + "33");
+  grd.addColorStop(1, hex + "00");
+  ctx.fillStyle = grd;
+  ctx.fillRect(0,0,256,256);
+  return new THREE.CanvasTexture(c);
+}
+function makeNebula(){
+  var group = new THREE.Group();
+  var colors = ["#2f6bff","#8b5cf6","#39e6ff"];
+  var count = isMobile ? 3 : 6;
+  for(var i=0;i<count;i++){
+    var tex = nebulaTexture(colors[i % colors.length]);
+    var mat = new THREE.SpriteMaterial({ map:tex, transparent:true, opacity:0.5, depthWrite:false, blending:THREE.AdditiveBlending });
+    var spr = new THREE.Sprite(mat);
+    var scale = 40 + Math.random()*50;
+    spr.scale.set(scale, scale, 1);
+    spr.position.set((Math.random()-0.5)*90, (Math.random()-0.5)*40, -20 - Math.random()*140);
+    group.add(spr);
+  }
+  scene.add(group);
+  return group;
+}
+var nebula = makeNebula();
+
+/* ---------- the skyway: a luminous thread connecting every arena ---------- */
+function makeSkyway(){
+  var pts = [new THREE.Vector3(HERO_KF.look[0], HERO_KF.look[1], HERO_KF.look[2])];
+  ARENAS.forEach(function(a){ pts.push(new THREE.Vector3(a.world[0], a.world[1], a.world[2])); });
+  pts.push(new THREE.Vector3(OUTRO_KF.look[0], OUTRO_KF.look[1], OUTRO_KF.look[2]));
+  var curve = new THREE.CatmullRomCurve3(pts);
+  var tubeGeo = new THREE.TubeBufferGeometry(curve, 220, 0.045, 8, false);
+  var tubeMat = new THREE.MeshBasicMaterial({ color:0x39e6ff, transparent:true, opacity:0.35 });
+  var tube = new THREE.Mesh(tubeGeo, tubeMat);
+  scene.add(tube);
+
+  var pulseGeo = new THREE.SphereBufferGeometry(0.16, 12, 12);
+  var pulseMat = new THREE.MeshBasicMaterial({ color:0xffffff });
+  var pulse = new THREE.Mesh(pulseGeo, pulseMat);
+  scene.add(pulse);
+
+  return { curve:curve, pulse:pulse };
+}
+var skyway = makeSkyway();
+
+/* ---------- shared helpers ---------- */
+function edged(geo, color, opacity){
+  var mat = new THREE.LineBasicMaterial({ color:color, transparent:true, opacity: (opacity!==undefined?opacity:0.9) });
+  return new THREE.LineSegments(new THREE.EdgesGeometry(geo), mat);
+}
+function glowMat(hex){
+  return new THREE.MeshStandardMaterial({ color:hex, emissive:hex, emissiveIntensity:0.9, metalness:0.3, roughness:0.35 });
+}
+
+/* ---------- arena builders — each returns { group, update(dt,t), light } ---------- */
+var arenaBuilders = {
+
+  trading: function(accent){
+    var group = new THREE.Group();
+    var bars = [];
+    var n = 7;
+    for(var i=0;i<n;i++){
+      var h = 0.8 + Math.random()*2.4;
+      var geo = new THREE.BoxBufferGeometry(0.4, h, 0.4);
+      var mesh = new THREE.Mesh(geo, glowMat(accent));
+      var angle = (i/n)*Math.PI*2;
+      mesh.position.set(Math.cos(angle)*1.8, h/2 - 1, Math.sin(angle)*1.8);
+      group.add(mesh);
+      group.add(edged(geo, accent, 0.5));
+      bars.push({mesh:mesh, baseH:h, phase:Math.random()*Math.PI*2});
+    }
+    var ring = new THREE.Mesh(new THREE.TorusBufferGeometry(2.6, 0.02, 8, 64), new THREE.MeshBasicMaterial({color:accent, transparent:true, opacity:0.5}));
+    ring.rotation.x = Math.PI/2;
+    group.add(ring);
+    var light = new THREE.PointLight(accent, 0, 12, 2);
+    group.add(light);
+    return { group:group, light:light, update:function(dt,t){
+      bars.forEach(function(b){ b.mesh.scale.y = 1 + Math.sin(t*1.4 + b.phase)*0.15; });
+      ring.rotation.z += dt*0.25;
+    }};
+  },
+
+  robotics: function(accent){
+    var group = new THREE.Group();
+    var base = new THREE.Mesh(new THREE.CylinderBufferGeometry(1.1,1.2,0.3,20), glowMat(accent));
+    base.position.y = -1.2;
+    group.add(base);
+    var shoulder = new THREE.Group(); shoulder.position.y = -1;
+    var upperArm = new THREE.Mesh(new THREE.BoxBufferGeometry(0.28,1.4,0.28), glowMat(accent));
+    upperArm.position.y = 0.7;
+    shoulder.add(upperArm);
+    var elbow = new THREE.Group(); elbow.position.y = 1.4;
+    var lowerArm = new THREE.Mesh(new THREE.BoxBufferGeometry(0.22,1.1,0.22), glowMat(accent));
+    lowerArm.position.y = 0.55;
+    elbow.add(lowerArm);
+    var gripper = new THREE.Mesh(new THREE.BoxBufferGeometry(0.4,0.2,0.4), glowMat(accent));
+    gripper.position.y = 1.1;
+    elbow.add(gripper);
+    shoulder.add(elbow);
+    group.add(shoulder);
+    var light = new THREE.PointLight(accent, 0, 10, 2);
+    light.position.y = 1;
+    group.add(light);
+    return { group:group, light:light, update:function(dt,t){
+      shoulder.rotation.z = Math.sin(t*0.6)*0.35;
+      elbow.rotation.z = Math.sin(t*0.9 + 1)*0.5 - 0.3;
+      shoulder.rotation.y += dt*0.15;
+    }};
+  },
+
+  drone: function(accent){
+    var group = new THREE.Group();
+    var body = new THREE.Mesh(new THREE.OctahedronBufferGeometry(0.32,0), glowMat(accent));
+    group.add(body);
+    var rotors = [];
+    var offsets = [[1,0,1],[1,0,-1],[-1,0,1],[-1,0,-1]];
+    offsets.forEach(function(o){
+      var arm = new THREE.Mesh(new THREE.CylinderBufferGeometry(0.03,0.03,1.15,6), glowMat(accent));
+      arm.position.set(o[0]*0.5,0,o[2]*0.5);
+      arm.rotation.z = Math.atan2(o[2],o[0]) + Math.PI/2;
+      group.add(arm);
+      var ring = new THREE.Mesh(new THREE.TorusBufferGeometry(0.28,0.015,6,20), new THREE.MeshBasicMaterial({color:accent, transparent:true, opacity:0.8}));
+      ring.position.set(o[0]*1.0,0,o[2]*1.0);
+      ring.rotation.x = Math.PI/2;
+      group.add(ring);
+      rotors.push(ring);
+    });
+    var loop = new THREE.Mesh(new THREE.TorusBufferGeometry(2.2,0.015,6,48), new THREE.MeshBasicMaterial({color:accent, transparent:true, opacity:0.25}));
+    loop.rotation.x = Math.PI/2; loop.position.y = -1;
+    group.add(loop);
+    var light = new THREE.PointLight(accent, 0, 10, 2);
+    group.add(light);
+    return { group:group, light:light, update:function(dt,t){
+      rotors.forEach(function(r){ r.rotation.z += dt*14; });
+      group.position.y += Math.sin(t*1.3)*0.001;
+      group.rotation.y += dt*0.2;
+      group.rotation.z = Math.sin(t*0.8)*0.08;
+    }};
+  },
+
+  startup: function(accent){
+    var group = new THREE.Group();
+    var towers = [];
+    var heights = [1.4,2.2,1.7,2.6,1.1];
+    heights.forEach(function(h, i){
+      var geo = new THREE.BoxBufferGeometry(0.5,h,0.5);
+      var mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color:accent, emissive:accent, emissiveIntensity:0.35, transparent:true, opacity:0.55, metalness:0.6, roughness:0.15 }));
+      mesh.position.set((i-2)*0.65, h/2-1.3, 0);
+      group.add(mesh);
+      group.add(edged(geo, accent, 0.8));
+      towers.push(mesh);
+    });
+    var rocket = new THREE.Mesh(new THREE.ConeBufferGeometry(0.18,0.6,10), glowMat(accent));
+    rocket.position.set(1.6,-0.5,0.3);
+    group.add(rocket);
+    var trailGeo = new THREE.BufferGeometry();
+    var trailCount = 40;
+    var trailPos = new Float32Array(trailCount*3);
+    for(var i=0;i<trailCount;i++){ trailPos[i*3]=1.6; trailPos[i*3+1]=-0.8-Math.random()*1.4; trailPos[i*3+2]=0.3; }
+    trailGeo.setAttribute("position", new THREE.BufferAttribute(trailPos,3));
+    var trail = new THREE.Points(trailGeo, new THREE.PointsMaterial({ color:accent, size:0.05, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false }));
+    group.add(trail);
+    var light = new THREE.PointLight(accent, 0, 10, 2);
+    group.add(light);
+    return { group:group, light:light, update:function(dt,t){
+      rocket.position.y = -0.5 + ((t*0.6) % 2.2);
+      var arr = trail.geometry.attributes.position.array;
+      for(var i=0;i<trailCount;i++){
+        arr[i*3+1] -= dt*0.7;
+        if(arr[i*3+1] < -2){ arr[i*3+1] = rocket.position.y - 0.2; }
+      }
+      trail.geometry.attributes.position.needsUpdate = true;
+      towers.forEach(function(m,i){ m.rotation.y += dt*0.05*(i%2?1:-1); });
+    }};
+  },
+
+  coding: function(accent){
+    var group = new THREE.Group();
+    var columns = [];
+    var colCount = isMobile ? 8 : 14;
+    for(var i=0;i<colCount;i++){
+      var angle = (i/colCount)*Math.PI*2;
+      var r = 1.6;
+      var geo = new THREE.BufferGeometry();
+      var segs = 6;
+      var posArr = new Float32Array(segs*3);
+      for(var s=0;s<segs;s++){ posArr[s*3]=Math.cos(angle)*r; posArr[s*3+1]=1.5-s*0.5; posArr[s*3+2]=Math.sin(angle)*r; }
+      geo.setAttribute("position", new THREE.BufferAttribute(posArr,3));
+      var mat = new THREE.PointsMaterial({ color:accent, size:0.06, transparent:true, opacity:0.8, blending:THREE.AdditiveBlending, depthWrite:false });
+      var col = new THREE.Points(geo, mat);
+      col.userData.speed = 0.6 + Math.random()*0.8;
+      group.add(col);
+      columns.push(col);
+    }
+    var core = new THREE.Mesh(new THREE.IcosahedronBufferGeometry(0.5,0), new THREE.MeshBasicMaterial({ color:accent, wireframe:true }));
+    group.add(core);
+    var light = new THREE.PointLight(accent, 0, 10, 2);
+    group.add(light);
+    return { group:group, light:light, update:function(dt,t){
+      columns.forEach(function(col){
+        var arr = col.geometry.attributes.position.array;
+        for(var i=1;i<arr.length;i+=3){
+          arr[i] -= dt*col.userData.speed;
+          if(arr[i] < -1.5) arr[i] = 1.5;
+        }
+        col.geometry.attributes.position.needsUpdate = true;
+      });
+      core.rotation.y += dt*0.4;
+      core.rotation.x += dt*0.2;
+    }};
+  },
+
+  ai: function(accent){
+    var group = new THREE.Group();
+    var core = new THREE.Mesh(new THREE.IcosahedronBufferGeometry(0.7,1), new THREE.MeshStandardMaterial({ color:accent, emissive:accent, emissiveIntensity:1.1, metalness:0.4, roughness:0.25, wireframe:false, transparent:true, opacity:0.85 }));
+    group.add(core);
+    var rings = [];
+    [[0.9,1.15],[1.3,1.02],[1.6,0.9]].forEach(function(cfg, i){
+      var ring = new THREE.Mesh(new THREE.TorusBufferGeometry(cfg[0],0.015,8,64), new THREE.MeshBasicMaterial({ color:accent, transparent:true, opacity:0.55 }));
+      ring.rotation.x = Math.PI/2 + i*0.5;
+      ring.rotation.y = i*0.7;
+      group.add(ring);
+      rings.push({mesh:ring, speed:cfg[1]*(i%2?1:-1)});
+    });
+    var nodeCount = isMobile ? 10 : 18;
+    var nodeGeo = new THREE.BufferGeometry();
+    var nodePos = new Float32Array(nodeCount*3);
+    for(var i=0;i<nodeCount;i++){
+      var a1 = Math.random()*Math.PI*2, a2 = Math.random()*Math.PI*2, rr = 2 + Math.random()*0.6;
+      nodePos[i*3]=Math.cos(a1)*rr; nodePos[i*3+1]=Math.sin(a2)*rr*0.6; nodePos[i*3+2]=Math.sin(a1)*rr;
+    }
+    nodeGeo.setAttribute("position", new THREE.BufferAttribute(nodePos,3));
+    var nodes = new THREE.Points(nodeGeo, new THREE.PointsMaterial({ color:accent, size:0.09, transparent:true, opacity:0.9, blending:THREE.AdditiveBlending, depthWrite:false }));
+    group.add(nodes);
+    var light = new THREE.PointLight(accent, 0, 10, 2);
+    group.add(light);
+    return { group:group, light:light, update:function(dt,t){
+      core.scale.setScalar(1 + Math.sin(t*1.6)*0.06);
+      rings.forEach(function(r){ r.mesh.rotation.z += dt*r.speed*0.3; });
+      nodes.rotation.y += dt*0.15;
+    }};
+  }
+};
+
+/* ---------- instantiate arenas ---------- */
+var arenaInstances = [];
+ARENAS.forEach(function(a){
+  var built = arenaBuilders[a.type](a.accent);
+  built.group.position.set.apply(built.group.position, a.world);
+  scene.add(built.group);
+  built.data = a;
+  arenaInstances.push(built);
+});
+
+/* =========================================================================
+   SCROLL-DRIVEN CAMERA FLIGHT + SECTION STATE
+   ========================================================================= */
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+var tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3(), lookTmp = new THREE.Vector3();
+function applyKeyframeProgress(globalProgress){
+  var nSeg = KF.length - 1;
+  var segF = Math.min(Math.max(globalProgress,0),1) * nSeg;
+  var segIndex = Math.min(Math.floor(segF), nSeg-1);
+  var localT = segF - segIndex;
+  var kA = KF[segIndex], kB = KF[segIndex+1];
+  tmpA.set.apply(tmpA, kA.pos); tmpB.set.apply(tmpB, kB.pos);
+  camera.position.lerpVectors(tmpA, tmpB, localT);
+  tmpA.set.apply(tmpA, kA.look); tmpB.set.apply(tmpB, kB.look);
+  lookTmp.lerpVectors(tmpA, tmpB, localT);
+  camera.lookAt(lookTmp);
+}
+
+var currentProgress = 0;
+if(!reducedMotion){
+  ScrollTrigger.create({
+    trigger: "#scrollTrack",
+    start: "top top",
+    end: "bottom bottom",
+    scrub: true,
+    onUpdate: function(self){
+      currentProgress = self.progress;
+      applyKeyframeProgress(currentProgress);
+    }
+  });
+}else{
+  applyKeyframeProgress(0);
+}
+
+/* ---------- per-arena reveal + light + hud active state ---------- */
+document.querySelectorAll(".panel-section[data-arena]").forEach(function(sec){
+  var id = sec.getAttribute("data-arena");
+  var panel = sec.querySelector(".arena-panel");
+  var inst = arenaInstances.filter(function(a){ return a.data.id === id; })[0];
+
+  ScrollTrigger.create({
+    trigger: sec,
+    start: "top center",
+    end: "bottom center",
+    onEnter: function(){ setArenaActive(id, true); },
+    onEnterBack: function(){ setArenaActive(id, true); },
+    onLeave: function(){ setArenaActive(id, false); },
+    onLeaveBack: function(){ setArenaActive(id, false); }
+  });
+
+  function setArenaActive(id, active){
+    if(panel) gsap.to(panel, { opacity: active?1:0, y: active?0:24, duration:.6, ease:"power2.out" });
+    if(inst) gsap.to(inst.light, { intensity: active ? 2.4 : 0, duration:.8 });
+  }
+});
+
+/* ---------- hero reveal on load ---------- */
+function playHeroIntro(){
+  gsap.to("h1.mega b", { y:"0%", duration:1.1, ease:"power4.out", stagger:0.12, delay:0.15 });
+  gsap.to("[data-hero-el]", { opacity:1, duration:1, ease:"power2.out", stagger:0.08, delay:0.5 });
+}
+
+/* ---------- inline nav click handling ---------- */
+document.body.addEventListener("click", function(e){
+  var link = e.target.closest("[data-nav-link]");
+  if(!link) return;
+  var href = link.getAttribute("href");
+  if(href && href.charAt(0) === "#"){
+    e.preventDefault();
+    scrollToId(href.slice(1));
+  }
+});
+function scrollToId(id){
+  var el = document.getElementById(id);
+  if(!el) return;
+  gsap.to(window, { duration:1.3, ease:"power2.inOut", scrollTo:{ y: el, offsetY:0 } });
+}
+
+/* ---------- premium header: scroll state + mobile menu ---------- */
+(function(){
+  var header = document.getElementById("siteHeader");
+  var burger = document.getElementById("headerBurger");
+  var nav = document.getElementById("headerNav");
+  function onHeaderScroll(){
+    if(!header) return;
+    header.classList.toggle("scrolled", window.scrollY > 40);
+  }
+  window.addEventListener("scroll", onHeaderScroll, { passive:true });
+  onHeaderScroll();
+  function setNavOpen(open){
+    nav.classList.toggle("open", open);
+    burger.classList.toggle("open", open);
+    burger.setAttribute("aria-expanded", open ? "true" : "false");
+    document.documentElement.classList.toggle("nav-open", open); // locks background scroll (see html.nav-open rule)
+  }
+  if(burger && nav){
+    burger.addEventListener("click", function(){
+      setNavOpen(!nav.classList.contains("open"));
+    });
+    nav.addEventListener("click", function(e){
+      if(e.target.closest("a")){
+        setNavOpen(false);
+      }
+    });
+    document.addEventListener("keydown", function(e){
+      if(e.key === "Escape" && nav.classList.contains("open")) setNavOpen(false);
+    });
+  }
+})();
+
+/* =========================================================================
+   MOUSE PARALLAX + HOVER RAYCAST
+   ========================================================================= */
+var mouse = { x:0, y:0 };
+var mouseLerp = { x:0, y:0 };
+window.addEventListener("pointermove", function(e){
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = (e.clientY / window.innerHeight) * 2 - 1;
+});
+
+var raycaster = new THREE.Raycaster();
+var hoverables = arenaInstances.map(function(a){ return a.group; });
+var hoveredArena = null;
+window.addEventListener("pointermove", function(e){
+  if(reducedMotion) return;
+  var nx = (e.clientX / window.innerWidth) * 2 - 1;
+  var ny = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera({x:nx,y:ny}, camera);
+  var hits = raycaster.intersectObjects(hoverables, true);
+  var hitArena = null;
+  if(hits.length){
+    var obj = hits[0].object;
+    while(obj && hoverables.indexOf(obj) === -1) obj = obj.parent;
+    if(obj){
+      hitArena = arenaInstances.filter(function(a){ return a.group === obj; })[0] || null;
+    }
+  }
+  if(hitArena !== hoveredArena){
+    if(hoveredArena) gsap.to(hoveredArena.group.scale, { x:1,y:1,z:1, duration:.4 });
+    if(hitArena) gsap.to(hitArena.group.scale, { x:1.12,y:1.12,z:1.12, duration:.4 });
+    document.body.style.cursor = hitArena ? "pointer" : "default";
+    hoveredArena = hitArena;
+  }
+});
+window.addEventListener("click", function(){
+  if(hoveredArena) scrollToId(hoveredArena.data.id);
+});
+
+/* =========================================================================
+   RENDER LOOP
+   ========================================================================= */
+var clock = new THREE.Clock();
+function tick(){
+  requestAnimationFrame(tick);
+  var dt = Math.min(clock.getDelta(), 0.05);
+  var t = clock.elapsedTime;
+
+  if(!reducedMotion){
+    mouseLerp.x += (mouse.x - mouseLerp.x) * 0.04;
+    mouseLerp.y += (mouse.y - mouseLerp.y) * 0.04;
+    camera.rotation.y += mouseLerp.x * 0.03 * dt * 10;
+    camera.rotation.x += -mouseLerp.y * 0.02 * dt * 10;
+    starfield.rotation.y += dt * 0.006;
+  }
+
+  arenaInstances.forEach(function(a){ a.update(dt, t); });
+
+  var curvePos = skyway.curve.getPointAt((Math.sin(t*0.08)*0.5+0.5));
+  skyway.pulse.position.copy(curvePos);
+
+  if(composer) composer.render();
+  else renderer.render(scene, camera);
+}
+
+/* =========================================================================
+   CINEMATIC VIDEO INTRO
+   Fullscreen Tech_intro.mp4 stands in for the old percentage loader. The
+   site (header/nav/hero/Three.js/scroll) stays frozen + hidden behind it
+   until the clip ends or the visitor presses ESC, then everything fades
+   and the exact same reveal sequence the old loader used to trigger
+   (playHeroIntro + applyKeyframeProgress) runs.
+   ========================================================================= */
+(function initCinematicIntro(){
+  var htmlEl        = document.documentElement;
+  var introOverlay  = document.getElementById("introOverlay");
+  var introVideo    = document.getElementById("introVideo");
+  var introSkipHint = document.getElementById("introSkipHint");
+  var INTRO_KEY     = "techverse_intro_seen";
+  var INTRO_FADE_MS = 850;  // matches #introOverlay transition duration
+  var INTRO_RATE    = 2.5;  // fast-forward so the clip feels punchier
+
+  /* Intro now replays on every visit (not just the first) — kept the
+     localStorage flag + ?intro=true param wired up in case that ever
+     needs to flip back to "once per visitor" behavior. */
+  var ALWAYS_REPLAY = true;
+  var params      = new URLSearchParams(window.location.search);
+  var forceReplay = params.get("intro") === "true";
+  var alreadySeen = false;
+  try{ alreadySeen = localStorage.getItem(INTRO_KEY) === "1"; }catch(e){}
+
+  var shouldPlayIntro = ALWAYS_REPLAY || forceReplay || !alreadySeen;
+  var siteStarted = false;
+  var introResolved = false;
+
+  function markIntroSeen(){
+    try{ localStorage.setItem(INTRO_KEY, "1"); }catch(e){}
+  }
+
+  /* Same reveal the old finishLoad() performed: kick GSAP hero intro,
+     snap the camera/keyframe rig to the hero position, unfreeze the site. */
+  function startSiteExperience(){
+    if(siteStarted) return;
+    siteStarted = true;
+    htmlEl.classList.remove("intro-lock");
+    playHeroIntro();
+    applyKeyframeProgress(0);
+  }
+
+  function teardownOverlay(){
+    if(!introOverlay) return;
+    try{
+      introVideo.pause();
+      introVideo.removeAttribute("src");
+      introVideo.load();
+    }catch(e){}
+    if(introOverlay.parentNode) introOverlay.parentNode.removeChild(introOverlay);
+  }
+
+  function resolveIntro(){
+    if(introResolved) return;
+    introResolved = true;
+    markIntroSeen();
+    document.removeEventListener("keydown", onIntroKeydown);
+    introOverlay.classList.add("intro-fade-out");
+    startSiteExperience();
+    setTimeout(teardownOverlay, INTRO_FADE_MS);
+  }
+
+  function onIntroKeydown(e){
+    if(e.key === "Escape" || e.key === "Esc" || e.keyCode === 27){
+      resolveIntro();
+    }
+  }
+
+  if(shouldPlayIntro && introOverlay && introVideo){
+    htmlEl.classList.add("intro-lock");
+    document.addEventListener("keydown", onIntroKeydown);
+    setTimeout(function(){ introSkipHint.classList.add("show"); }, 2000);
+
+    introVideo.muted = true;
+    introVideo.playbackRate = INTRO_RATE;
+    introVideo.addEventListener("loadedmetadata", function(){
+      introVideo.playbackRate = INTRO_RATE; // some browsers reset rate once metadata loads
+    });
+    introVideo.addEventListener("ended", resolveIntro);
+    introVideo.addEventListener("error", resolveIntro);
+
+    var playPromise = introVideo.play();
+    if(playPromise && typeof playPromise.catch === "function"){
+      playPromise.catch(function(){
+        /* autoplay blocked by the browser — don't strand the visitor
+           behind a frozen black screen, drop straight into the site */
+        resolveIntro();
+      });
+    }
+  }else{
+    /* returning visitor: no video, no freeze, site loads instantly */
+    if(introOverlay && introOverlay.parentNode) introOverlay.parentNode.removeChild(introOverlay);
+    startSiteExperience();
+  }
+})();
+
+tick();
+
+/* =========================================================================
+   REDUCED MOTION TOGGLE
+   ========================================================================= */
+var motionBtn = document.getElementById("motionToggle");
+function setReducedMotion(v){
+  reducedMotion = v;
+  document.documentElement.classList.toggle("reduced", v);
+  motionBtn.setAttribute("aria-pressed", v ? "true" : "false");
+  motionBtn.textContent = "Reduced motion: " + (v ? "On" : "Off");
+  if(v){ applyKeyframeProgress(currentProgress); }
+}
+setReducedMotion(reducedMotion);
+motionBtn.addEventListener("click", function(){ setReducedMotion(!reducedMotion); });
+
+/* =========================================================================
+   RESIZE
+   ========================================================================= */
+window.addEventListener("resize", function(){
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  if(composer) composer.setSize(window.innerWidth, window.innerHeight);
+  ScrollTrigger.refresh();
+});
+
+})();
+</script>
+</body>
+</html>
