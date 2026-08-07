@@ -3,146 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Workshops — JG TechVerse 2026</title>
-<meta name="description" content="Hands-on workshops and sessions running alongside TechVerse 2026.">
+<title>10-Day Autonomous Workshop Plan — TechVerse 2026</title>
+<meta name="description" content="Day-by-day roadmap for the TechVerse 2026 Autonomous Workshop — from ideation to competition-ready demo.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="techverse-theme.css">
 <style>
-  /* === HUD interactive card system === */
-  .hud-card{
-    --accent: #22e0ff;
-    position:relative;
-    display:flex;
-    flex-direction:column;
-    background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
-    border:1px solid rgba(255,255,255,.09);
-    border-radius:14px;
-    overflow:hidden;
-    isolation:isolate;
-    transition:transform .28s cubic-bezier(.2,.7,.3,1), border-color .28s ease, box-shadow .28s ease;
+  /* =========================================================================
+     TOKENS — copied verbatim from jg-techverse-2026.html
+     ========================================================================= */
+  :root{
+    --bg:#03040a;
+    --glass:rgba(6,9,22,.82);
+    --glass-soft:rgba(6,9,22,.6);
+    --line:rgba(160,185,255,.22);
+    --ink:#ffffff;
+    --ink-dim:#c3ccec;
+    --blue:#2f6bff;
+    --cyan:#39e6ff;
+    --purple:#8b5cf6;
+    --violet:#a78bfa;
+    --indigo:#6366f1;
+    --white:#ffffff;
+    --text-shadow-soft:0 2px 4px rgba(0,0,0,.7), 0 8px 30px rgba(0,0,0,.75);
+    --disp:'Orbitron', sans-serif;
+    --body:'Inter', sans-serif;
+    --mono:'JetBrains Mono', monospace;
   }
-  .hud-card:hover{
-    transform:translateY(-6px);
-    border-color:color-mix(in srgb, var(--accent) 55%, transparent);
-    box-shadow:0 18px 40px -18px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent) inset;
-  }
-  .hud-card::before, .hud-card::after{
-    content:"";
-    position:absolute;
-    width:14px;height:14px;
-    border-color:var(--accent);
-    opacity:0;
-    transition:opacity .25s ease, width .25s ease, height .25s ease;
-    pointer-events:none;
-    z-index:3;
-  }
-  .hud-card::before{ top:8px;left:8px;border-top:2px solid;border-left:2px solid; }
-  .hud-card::after{ bottom:8px;right:8px;border-bottom:2px solid;border-right:2px solid; }
-  .hud-card:hover::before,.hud-card:hover::after{ opacity:1; width:20px;height:20px; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);color:var(--ink);font-family:var(--body);overflow-x:hidden;}
+  a{color:inherit;text-decoration:none;}
+  ::selection{background:var(--cyan);color:#04060d;}
+  button{font-family:inherit;cursor:pointer;}
 
-  .hud-banner{
-    position:relative;
-    height:88px;
-    display:flex;align-items:center;justify-content:center;
+  /* ---------------- background canvas + scrim — same treatment as source ---------------- */
+  #bgCanvas{position:fixed;inset:0;z-index:0;display:block;}
+  #scrim{
+    position:fixed;inset:0;z-index:1;pointer-events:none;
     background:
-      linear-gradient(135deg, color-mix(in srgb, var(--accent) 30%, transparent), transparent 65%),
-      repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 2px, transparent 2px 14px),
-      rgba(255,255,255,.02);
-    border-bottom:1px solid rgba(255,255,255,.08);
-    overflow:hidden;
-    flex-shrink:0;
-  }
-  .hud-banner img{ width:100%;height:100%;object-fit:cover; }
-  .hud-banner::after{
-    content:"";
-    position:absolute; inset:0;
-    background:linear-gradient(180deg, transparent 0%, rgba(255,255,255,.10) 45%, transparent 100%);
-    transform:translateY(-120%);
-    transition:transform .7s ease;
-  }
-  .hud-card:hover .hud-banner::after{ transform:translateY(120%); }
-  .hud-callsign{
-    font-family:var(--display, 'Orbitron', sans-serif);
-    font-weight:900;
-    font-size:15px;
-    letter-spacing:.04em;
-    text-transform:uppercase;
-    color:color-mix(in srgb, var(--accent) 92%, white 8%);
-    text-shadow:0 0 18px color-mix(in srgb, var(--accent) 70%, transparent);
-    opacity:.9;
-    z-index:1;
-    text-align:center;
-    padding:0 12px;
+      linear-gradient(180deg, rgba(2,3,8,.55) 0%, rgba(2,3,8,.15) 18%, rgba(2,3,8,.15) 82%, rgba(2,3,8,.6) 100%),
+      radial-gradient(120% 90% at 50% 100%, rgba(2,3,8,.35), transparent 60%);
   }
 
-  .hud-body{ padding:16px 18px 18px; display:flex; flex-direction:column; gap:10px; flex:1; }
-  .hud-tag{
-    align-self:flex-start;
-    display:inline-flex; align-items:center; gap:6px;
-    padding:3px 10px;
-    border-radius:999px;
-    border:1px solid color-mix(in srgb, var(--accent) 55%, transparent);
-    background:color-mix(in srgb, var(--accent) 12%, transparent);
-    color:color-mix(in srgb, var(--accent) 92%, white 8%);
-    font-family:var(--mono,'JetBrains Mono',monospace);
-    font-size:10px; text-transform:uppercase; letter-spacing:.09em;
-  }
-  .hud-tag::before{ content:""; width:6px;height:6px;border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent); }
-  .hud-title{ font-family:var(--display,'Orbitron',sans-serif); font-size:16px; line-height:1.3; margin:0; }
-  .hud-desc{ font-size:13px; line-height:1.55; color:var(--ink-dim,rgba(255,255,255,.6)); margin:0; }
+  #pageContent{position:relative;z-index:2;}
 
-  .hud-meta{ display:flex; flex-direction:column; gap:5px; font-family:var(--mono,'JetBrains Mono',monospace); font-size:11.5px; color:var(--ink-dim,rgba(255,255,255,.65)); }
-  .hud-meta-row{ display:flex; gap:8px; align-items:baseline; }
-  .hud-meta-row b{ color:rgba(255,255,255,.85); font-weight:600; min-width:52px; flex-shrink:0; text-transform:uppercase; font-size:10px; letter-spacing:.06em; opacity:.65; }
-
-  .hud-avatar{
-    width:34px;height:34px;border-radius:50%;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;
-    font-family:var(--display,'Orbitron',sans-serif); font-weight:700; font-size:12px;
-    background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 65%, transparent), transparent);
-    border:1px solid color-mix(in srgb, var(--accent) 55%, transparent);
-    color:#fff;
-  }
-  .hud-speaker-row{ display:flex; align-items:center; gap:10px; }
-  .hud-speaker-row div{ display:flex; flex-direction:column; gap:1px; }
-  .hud-speaker-name{ font-size:12.5px; font-weight:600; }
-  .hud-speaker-role{ font-size:10px; font-family:var(--mono,'JetBrains Mono',monospace); color:var(--ink-dim,rgba(255,255,255,.55)); text-transform:uppercase; letter-spacing:.06em; }
-
-  .hud-pill{
-    display:inline-flex; align-items:center; gap:6px;
-    padding:4px 10px; border-radius:999px;
-    font-family:var(--mono,'JetBrains Mono',monospace); font-size:10.5px;
-    border:1px solid rgba(255,255,255,.14); color:rgba(255,255,255,.8);
-    width:fit-content;
-  }
-  .hud-pill.seats-ok{ border-color:rgba(41,255,160,.5); color:#29ffa0; background:rgba(41,255,160,.08); }
-  .hud-pill.seats-low{ border-color:rgba(255,176,32,.55); color:#ffb020; background:rgba(255,176,32,.08); }
-  .hud-pill.seats-crit{ border-color:rgba(255,63,90,.55); color:#ff3f5a; background:rgba(255,63,90,.08); }
-  .hud-pill::before{ content:""; width:6px;height:6px;border-radius:50%; background:currentColor; }
-
-  .hud-actions{ margin-top:auto; padding-top:6px; }
-  .hud-actions .btn{ width:100%; text-align:center; font-size:12.5px; padding:9px 14px; }
-  .hud-actions .btn-primary{ background:var(--accent); border-color:var(--accent); color:#050508; }
-  .hud-actions .btn-primary:hover{ filter:brightness(1.12); }
-
-  @media (prefers-reduced-motion: reduce){
-    .hud-card, .hud-banner::after{ transition:none !important; }
-    .hud-card:hover{ transform:none; }
-  }
-
-  /* ---------------- site header ---------------- */
-  /*
-    ROOT-CAUSE FIX: backdrop-filter on a position:fixed element makes that
-    element the CONTAINING BLOCK for any of its own position:fixed
-    descendants (spec: filter/backdrop-filter/transform/will-change all do
-    this). That's why .header-nav (fixed, child of .site-header) was being
-    sized/positioned against the 88px-tall header box instead of the
-    viewport. Fix: keep .site-header itself filter-free, and render the
-    glass background on a ::before layer instead. .site-header no longer
-    establishes a containing block, so .header-nav's fixed positioning
-    resolves against the viewport again, while the visual blur is unchanged.
-  */
+  /* ---------------- site header — markup + CSS copied from source ---------------- */
   .site-header{
     position:fixed;top:0;left:0;right:0;z-index:200;height:123px;
     display:grid;
@@ -151,48 +55,37 @@
     align-items:center;column-gap:clamp(12px,2vw,32px);
     padding:0 clamp(20px,4vw,48px);
     overflow:hidden;
-    /* background:transparent; */
-    /* border-bottom:1px solid rgba(255,255,255,.08); */
-    /* opacity:0;animation:headerFadeIn .8s ease forwards;animation-delay:.15s; */
-    transition:box-shadow .4s ease;
-    isolation:isolate; /* keep the ::before's z-index:-1 scoped to this header, not the page */
+    transition:box-shadow .4s ease, background .3s ease;
+    isolation:isolate;
   }
   .site-header::before{
     content:"";position:absolute;inset:0;z-index:-1;
-    /* background:rgba(5,7,18,.35); */
-    /* backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%); */
-    /* transition:background .4s ease,backdrop-filter .4s ease; */
+    background:rgba(5,7,18,.35);
+    backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);
+    transition:background .4s ease;
   }
-  
-  
-  @keyframes headerFadeIn{to{opacity:1;}}
+  .site-header.scrolled::before{background:rgba(4,6,14,.72);border-bottom:1px solid var(--line);}
 
   .header-brand{grid-column:1;grid-row:1;align-self:center;display:flex;align-items:center;gap:12px;min-width:0;}
-  .header-brand img.logo{height:102px;width:auto;padding:10px;}
+  .header-brand .logo-mark{
+    height:52px;width:52px;border-radius:12px;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--disp);font-weight:900;font-size:18px;color:var(--bg);
+    background:linear-gradient(150deg,var(--cyan),var(--purple));
+  }
   .header-brand .brand-text{font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.08em;color:var(--ink);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .header-brand .brand-text small{display:block;font-family:var(--mono);font-weight:400;font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-top:2px;}
 
   .header-nav{
-    /* Grid column 2 gives the nav its own reserved space between the brand
-       and CTA columns — it can never overlap them, at any header width.
-       (Previously this was position:absolute + left:50%, which centered
-       against the header's full width with no awareness of how wide the
-       brand/CTA actually were — that's what caused the overlap.) */
     grid-column:2;grid-row:1;justify-self:center;min-width:0;max-width:100%;
     display:flex;align-items:center;justify-content:center;gap:clamp(20px,3vw,44px);
     overflow:hidden;
   }
   .header-nav a{
     position:relative;font-family:var(--disp);font-weight:700;font-size:13px;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--ink);padding:10px 2px;opacity:0;
-    transition:color .2s ease;animation:navItemIn .55s ease forwards;
+    text-transform:uppercase;color:var(--ink);padding:10px 2px;
+    transition:color .2s ease;
   }
-  .header-nav a:nth-child(1){animation-delay:.32s;}
-  .header-nav a:nth-child(2){animation-delay:.38s;}
-  .header-nav a:nth-child(3){animation-delay:.44s;}
-  .header-nav a:nth-child(4){animation-delay:.5s;}
-  .header-nav a:nth-child(5){animation-delay:.56s;}
-  @keyframes navItemIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
   .header-nav a::after{
     content:"";position:absolute;left:50%;bottom:-2px;width:0;height:2px;
     background:linear-gradient(90deg,var(--cyan),var(--purple));box-shadow:0 0 8px var(--cyan);
@@ -208,19 +101,11 @@
 
   .header-cta{
     grid-column:3;grid-row:1;justify-self:end;align-self:center;position:relative;flex:0 0 auto;
-    opacity:0;transform:translateX(16px);
-    animation:ctaIn .6s cubic-bezier(.22,1,.36,1) forwards;animation-delay:.5s;
   }
-  @keyframes ctaIn{to{opacity:1;transform:translateX(0);}}
-
   .header-burger{grid-column:3;grid-row:1;justify-self:end;align-self:center;display:none;}
 
   @media (max-width:1335px){
     .header-nav{
-      /* Full-viewport drawer. inset:0 + width/height 100% covers the whole
-         screen (hero included) instead of just the header's box. Because
-         .site-header no longer creates a containing block (see fix above),
-         "fixed" here resolves against the real viewport. */
       position:fixed;inset:0;left:auto;width:100%;height:100dvh;max-height:100dvh;
       transform:translateX(100%);
       flex-direction:column;justify-content:center;align-items:center;gap:28px;
@@ -230,14 +115,12 @@
       border-left:1px solid var(--line);
       transition:transform .45s cubic-bezier(.22,1,.36,1);
       overflow-y:auto;
-      z-index:220; /* above .site-header (200), below .header-burger (250) so the burger keeps working as the close control */
+      z-index:220;
     }
     .header-nav.open{transform:translateX(0);}
-    .header-nav a{font-size:18px;opacity:1;animation:none;}
+    .header-nav a{font-size:18px;}
     a.header-cta{display:none;}
-    .header-nav a.nav-cta-mobile{
-      display:inline-flex;margin-top:8px;
-    }
+    .header-nav a.nav-cta-mobile{display:inline-flex;margin-top:8px;}
     .header-burger{
       display:flex;flex-direction:column;justify-content:center;gap:5px;
       width:34px;height:34px;background:none;border:none;z-index:250;flex:0 0 auto;
@@ -249,13 +132,10 @@
   }
   .header-nav .nav-cta-mobile{display:none;}
   html.nav-open, html.nav-open body{overflow:hidden;height:100%;overscroll-behavior:none;}
-  @media (max-width:560px){
-    .header-brand .brand-text small{display:none;}
-  }
+  @media (max-width:560px){.header-brand .brand-text small{display:none;}}
 
-  /* button styles scoped to the header CTA only, to avoid overriding
-     this page's own .btn / .btn-primary / .btn-ghost rules used elsewhere */
-  .header-cta.btn{
+  /* ---------------- unified button system — copied verbatim ---------------- */
+  .btn{
     position:relative;display:inline-flex;align-items:center;gap:10px;
     font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
     padding:13px 26px;color:#fff;border:1px solid transparent;
@@ -263,25 +143,165 @@
     transition:transform .2s cubic-bezier(.22,1,.36,1),box-shadow .2s cubic-bezier(.22,1,.36,1),
       border-color .2s ease,color .2s ease,background .2s ease,filter .2s ease;
   }
-  .header-cta.btn:hover, .header-cta.btn:focus-visible{transform:translateY(-2px) scale(1.03);}
-  .header-cta.btn:active{transform:translateY(0) scale(.98);}
-  .header-cta.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;}
-  .header-cta.btn-glow{
+  .btn:hover, .btn:focus-visible{transform:translateY(-2px) scale(1.03);}
+  .btn:active{transform:translateY(0) scale(.98);}
+  .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;}
+  .btn-sm{padding:10px 20px;font-size:11px;gap:6px;}
+  .btn-glow{
     background:linear-gradient(135deg,var(--purple),var(--indigo) 55%,var(--blue));
     border-color:rgba(167,139,250,.5);
     box-shadow:0 0 0 1px rgba(167,139,250,.15) inset, 0 8px 26px -10px rgba(139,92,246,.65);
   }
-  .header-cta.btn-glow:hover, .header-cta.btn-glow:focus-visible{
+  .btn-glow:hover, .btn-glow:focus-visible{
     border-color:var(--violet);
     box-shadow:0 0 0 1px rgba(167,139,250,.3) inset, 0 14px 34px -8px rgba(139,92,246,.9);
+  }
+  .btn-outline{background:rgba(255,255,255,.03);color:var(--ink);border-color:var(--line);}
+  .btn-outline:hover, .btn-outline:focus-visible{border-color:var(--cyan);color:var(--cyan);
+    box-shadow:0 8px 26px -16px rgba(57,230,255,.6);}
+
+  /* ---------------- shared layout ---------------- */
+  .panel-section{position:relative;padding:150px clamp(20px,6vw,90px) 90px;}
+  .panel-section:first-of-type{padding-top:180px;}
+
+  .eyebrow{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--cyan);
+    display:flex;align-items:center;gap:10px;margin-bottom:20px;text-shadow:var(--text-shadow-soft);
+  }
+  .eyebrow::before{content:"";width:28px;height:1px;background:var(--cyan);}
+
+  .hero-inner{
+    max-width:850px;background:linear-gradient(165deg, rgba(4,6,14,.66), rgba(4,6,14,.32) 55%, rgba(4,6,14,.1));
+    border-radius:28px;padding:clamp(24px,4vw,44px);backdrop-filter:blur(6px);
+    margin:0 auto;
+  }
+  h1.mega{
+    font-family:var(--disp);font-weight:900;text-transform:uppercase;
+    font-size:clamp(38px,7vw,90px);line-height:1.0;letter-spacing:-.01em;margin:0 0 22px;
+    filter:drop-shadow(0 4px 26px rgba(0,0,0,.85)) drop-shadow(0 1px 4px rgba(0,0,0,.9));
+  }
+  h1.mega .grad{
+    background:linear-gradient(100deg,#fff 5%, var(--cyan) 40%, var(--purple) 75%, #fff 100%);
+    background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:gradientDrift 8s ease-in-out infinite;
+  }
+  @keyframes gradientDrift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+  .hero-sub{font-size:clamp(15px,1.9vw,19px);line-height:1.7;color:var(--ink-dim);max-width:600px;margin-bottom:32px;text-shadow:var(--text-shadow-soft);}
+  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:36px;}
+  .pill{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--ink-dim);
+    border:1px solid var(--line);border-radius:999px;padding:9px 16px;background:var(--glass-soft);
+  }
+  .pill-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:34px;}
+  .hero-meta{display:flex;gap:44px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:22px;}
+  .hero-meta .m-label{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:6px;}
+  .hero-meta .m-value{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.02em;}
+
+  /* ---------------- content sections, using the arena-panel glass-card language ---------------- */
+  .content-wrap{max-width:900px;margin:0 auto;}
+  .sec-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:30px;}
+  .sec-badge{
+    flex:0 0 auto;width:38px;height:38px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--disp);font-weight:900;font-size:16px;
+    background:linear-gradient(150deg, rgba(57,230,255,.18), rgba(139,92,246,.18));
+    border:1px solid var(--line);color:var(--cyan);
+  }
+  .sec-head h2{font-family:var(--disp);font-weight:700;font-size:clamp(22px,3vw,30px);text-transform:uppercase;letter-spacing:.01em;margin-bottom:6px;color:#fff;text-shadow:var(--text-shadow-soft);}
+  .sec-head p{color:var(--ink-dim);font-size:14.5px;}
+
+  .glass-card{
+    background:var(--glass);border:1px solid var(--line);border-radius:20px;
+    backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%);
+    box-shadow:0 30px 70px -30px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+
+  .mission-card{padding:26px 28px;font-size:16px;line-height:1.75;color:var(--ink);border-left:3px solid var(--cyan);}
+
+  .phase-label{
+    font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--bg);background:var(--cyan);display:inline-block;border-radius:999px;
+    padding:6px 16px;margin:34px 0 16px;
+  }
+  .phase-label:first-child{margin-top:0;}
+  .phase-label.c-teal{background:#2dd4bf;}
+  .phase-label.c-gold{background:#e2a83a;}
+  .phase-label.c-indigo{background:var(--indigo);color:#fff;}
+
+  .day-card{
+    display:flex;gap:20px;align-items:flex-start;padding:20px 24px;margin-bottom:12px;
+    transition:border-color .2s ease, transform .2s ease;
+  }
+  .day-card:hover{border-color:rgba(57,230,255,.4);transform:translateY(-2px);}
+  .day-num{
+    flex:0 0 auto;width:58px;text-align:center;
+    font-family:var(--disp);font-weight:900;font-size:26px;
+    background:linear-gradient(160deg,#fff, var(--cyan));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .day-num small{display:block;font-family:var(--mono);font-weight:600;font-size:9px;letter-spacing:.18em;color:var(--ink-dim);-webkit-text-fill-color:var(--ink-dim);margin-bottom:2px;}
+  .day-body h3{font-family:var(--disp);font-weight:700;font-size:15.5px;text-transform:uppercase;letter-spacing:.02em;margin-bottom:6px;color:#fff;}
+  .day-body p{color:var(--ink-dim);font-size:14px;line-height:1.65;}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media (max-width:640px){.grid-2{grid-template-columns:1fr;}}
+  .check-item{
+    display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;color:var(--ink);
+    border-left:3px solid #2dd4bf;
+  }
+  .check-item .tick{
+    flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:rgba(45,212,191,.15);
+    display:flex;align-items:center;justify-content:center;color:#2dd4bf;font-size:12px;font-weight:700;
+  }
+  .check-item.gold{border-left-color:#e2a83a;}
+  .check-item.gold .tick{background:rgba(226,168,58,.15);color:#e2a83a;}
+
+  .vision-card{
+    margin-top:22px;padding:28px 30px;
+    background:linear-gradient(150deg, rgba(47,107,255,.16), rgba(139,92,246,.12));
+  }
+  .vision-card .tag{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--violet);margin-bottom:10px;display:block;}
+  .vision-card p{font-size:16px;line-height:1.7;color:var(--ink);}
+  .vision-card b{color:var(--cyan);}
+
+  .point-card{
+    margin-top:18px;padding:24px 26px;
+    border:1px dashed rgba(226,168,58,.5);border-radius:20px;background:rgba(226,168,58,.05);
+  }
+  .point-card h4{font-family:var(--disp);font-weight:700;font-size:14.5px;text-transform:uppercase;letter-spacing:.02em;color:#e2a83a;margin-bottom:8px;}
+  .point-card p{color:var(--ink-dim);font-size:14.5px;line-height:1.7;}
+
+  #outro .outro-inner{
+    max-width:640px;
+    background:linear-gradient(165deg, rgba(4,6,14,.66), rgba(4,6,14,.32) 55%, rgba(4,6,14,.1));
+    border-radius:28px;padding:clamp(24px,4vw,44px);backdrop-filter:blur(6px);
+  }
+  #outro h2{font-family:var(--disp);font-weight:900;font-size:clamp(30px,5vw,52px);line-height:1.04;margin-bottom:18px;text-transform:uppercase;
+    background:linear-gradient(100deg,#fff, var(--cyan), var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 26px rgba(0,0,0,.85));}
+  #outro p{font-size:16px;line-height:1.7;color:var(--ink-dim);margin-bottom:26px;max-width:520px;text-shadow:var(--text-shadow-soft);}
+
+  footer.site-footer{
+    position:relative;z-index:2;border-top:1px solid var(--line);padding:28px clamp(20px,6vw,90px) 44px;
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-dim);
+  }
+
+  @media (max-width:760px){
+    .glass-card{border-radius:16px;}
   }
 </style>
 </head>
 <body>
 
+<!-- ---------------- background: starfield canvas + scrim, same treatment as source ---------------- -->
+<canvas id="bgCanvas" aria-hidden="true"></canvas>
+<div id="scrim" aria-hidden="true"></div>
+
+<!-- ---------------- header: markup copied from jg-techverse-2026.html ---------------- -->
 <header class="site-header" id="siteHeader">
   <a href="jg-techverse-2026.html" class="header-brand" aria-label="TechVerse 2026 — home">
-    <img src="JG_Logo.png" alt="JG University logo" class="logo">
+    <img src="JG_Logo.png" alt="JG University logo" class="logo" style="height: 102px; width: auto; padding: 10px;">
   </a>
 
   <nav class="header-nav" id="headerNav" aria-label="Primary">
@@ -290,156 +310,281 @@
     <a href="sponsors.html">Sponsors</a>
     <a href="workshops.html" class="active">Workshops</a>
     <a href="contact.html">Contact</a>
-   
+    <a href="#roadmap" class="header-cta nav-cta-mobile btn btn-glow" data-nav-link>View Roadmap</a>
   </nav>
 
-  
+  <a href="#roadmap" class="header-cta btn btn-glow" data-nav-link>View Roadmap</a>
 
   <button class="header-burger" id="headerBurger" type="button" aria-label="Toggle menu" aria-expanded="false" aria-controls="headerNav">
     <span></span><span></span><span></span>
   </button>
 </header>
 
-<main>
-  <section class="page-hero wrap">
-    <div>
-      <span class="eyebrow">Learn // Hands-on sessions</span>
-      <h1 class="page-title">Workshops</h1>
-      <p class="page-sub">Skill-building sessions running alongside the competitions — from beginner primers to deep dives led by mentors and coordinators.</p>
-    </div>
-  </section>
+<div id="pageContent">
 
-  <section class="block wrap">
-    <h2 class="section-title">Schedule</h2>
-    <div class="card-grid" id="workshopsGrid">
-      <div class="placeholder">
-        <b>Workshop card — component</b>
-        Title · speaker · track · date &amp; time · seats · register CTA
+  <section class="panel-section" id="hero">
+    <div class="hero-inner">
+      <span class="eyebrow">Techverse Ready</span>
+      <h1 class="mega"><span class="grad">10-Day Autonomous</span><br>Workshop Plan</h1>
+      <p class="hero-sub">From ideas to intelligent innovation — a mentor-driven journey of engineering excellence, rapid prototyping, and competition-ready results across every arena.</p>
+      <div class="pill-row">
+        <span class="pill">Mentor-Driven</span>
+        <span class="pill">Hands-On Engineering</span>
+        <span class="pill">Pitch-Ready Coaching</span>
+        <span class="pill">Competition Focused</span>
+      </div>
+      <div class="hero-meta">
+        <div>
+          <div class="m-label">Program Duration</div>
+          <div class="m-value">10 Days · Structured Mentoring Track</div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="block wrap">
-    <h2 class="section-title">Speakers &amp; mentors</h2>
-    <div class="placeholder">
-      <b>Speaker grid — component</b>
-      Add speaker photos, names and bios here.
-    </div>
-    <div class="actions">
-      <a href="student-portal.html" class="btn btn-primary">Reserve a seat</a>
-      <a href="jg-techverse-2026.html" class="btn btn-ghost">Back to arena universe</a>
+  <section class="panel-section" id="mission">
+    <div class="content-wrap">
+      <div class="sec-head">
+        <div class="sec-badge">M</div>
+        <div>
+          <h2>Program Mission</h2>
+          <p>Why this workshop exists</p>
+        </div>
+      </div>
+      <div class="glass-card mission-card">
+        Empower student teams to transform innovative ideas into fully functional, competition-ready prototypes across all six arenas through structured mentoring, engineering excellence, rapid prototyping, rigorous testing, and impactful, pitch-ready presentations.
+      </div>
     </div>
   </section>
 
-  <footer class="site-footer wrap">
-    <span class="fine">JG TechVerse 2026 — Startup &amp; Innovation Expo</span>
-    <div class="foot-links">
-      <a href="jg-techverse-2026.html">Home</a>
-      <a href="competitions.html">Competitions</a>
-      <a href="sponsors.html">Sponsors</a>
-      <a href="contact.html">Contact</a>
+  <section class="panel-section" id="roadmap">
+    <div class="content-wrap">
+      <div class="sec-head">
+        <div class="sec-badge">R</div>
+        <div>
+          <h2>Day-by-Day Roadmap</h2>
+          <p>Ten days, five phases, one competition-ready prototype</p>
+        </div>
+      </div>
+
+      <span class="phase-label c-teal">Phase 1 · Ideation &amp; Planning</span>
+      <div class="day-card glass-card">
+        <div class="day-num"><small>Day</small>01</div>
+        <div class="day-body">
+          <h3>Discover · Evaluate · Inspire</h3>
+          <p>Assess team skills, review ideas and prior projects, identify innovation potential, form teams, and finalize the most promising concepts.</p>
+        </div>
+      </div>
+      <div class="day-card glass-card">
+        <div class="day-num"><small>Day</small>02</div>
+        <div class="day-body">
+          <h3>Strategize · Plan · Resource</h3>
+          <p>Freeze project scope, prepare the Bill of Materials, allocate team responsibilities, and identify required hardware and software resources.</p>
+        </div>
+      </div>
+
+      <span class="phase-label">Phase 2 · Design &amp; Build</span>
+      <div class="day-card glass-card">
+        <div class="day-num"><small>Day</small>03</div>
+        <div class="day-body">
+          <h3>Learn · Design · Architect</h3>
+          <p>Understand system architecture, core hardware components, sensors, coding workflows, simulations, and curated learning resources.</p>
+        </div>
+      </div>
+      <div class="day-card glass-card">
+        <div class="day-num"><small>Day</small>04</div>
+        <div class="day-body">
+          <h3>Build · Assemble · Configure</h3>
+          <p>Begin hardware assembly, electronics integration, core system setup, and the initial coding pass.</p>
+        </div>
+      </div>
+      <div class="day-card glass-card">
+        <div class="day-num"><small>Day</small>05</div>
+        <div class="day-body">
+          <h3>Develop · Integrate · Validate</h3>
+          <p>Integrate sensors and autonomous algorithms, and begin subsystem-level testing and validation.</p>
+        </div>
+      </div>
+
+      <span class="phase-label c-teal">Phase 3 · Review &amp; Optimize</span>
+      <div class="day-card glass-card">
+        <div class="day-num"><small>Day</small>06</div>
+        <div class="day-body">
+          <h3>Review · Debug · Present</h3>
+          <p>Resolve outstanding issues, track progress, and begin building the presentation, documentation, and project storytelling.</p>
+        </div>
+      </div>
+      <div class="day-card glass-card">
+        <div class="day-num"><small>Day</small>07</div>
+        <div class="day-body">
+          <h3>Optimize &amp; Complete</h3>
+          <p>Finish system integration, improve reliability, and carry out complete functionality testing.</p>
+        </div>
+      </div>
+
+      <span class="phase-label c-gold">Phase 4 · Test &amp; Rehearse</span>
+      <div class="day-card glass-card">
+        <div class="day-num"><small>Day</small>08</div>
+        <div class="day-body">
+          <h3>Benchmark &amp; Assess</h3>
+          <p>Evaluate readiness, identify gaps, optimize performance, and complete any pending modules.</p>
+        </div>
+      </div>
+      <div class="day-card glass-card">
+        <div class="day-num"><small>Day</small>09</div>
+        <div class="day-body">
+          <h3>Test · Refine · Rehearse</h3>
+          <p>Conduct trial runs and debugging, practice mock judging sessions, and align delivery with evaluation criteria.</p>
+        </div>
+      </div>
+
+      <span class="phase-label c-indigo">Phase 5 · Launch</span>
+      <div class="day-card glass-card">
+        <div class="day-num"><small>Day</small>10</div>
+        <div class="day-body">
+          <h3>Demonstrate · Impress · Win</h3>
+          <p>Deliver the final demonstration, explain technical innovations with clarity, and answer judges confidently and persuasively.</p>
+        </div>
+      </div>
     </div>
-  </footer>
-</main>
+  </section>
+
+  <section class="panel-section" id="success">
+    <div class="content-wrap">
+      <div class="sec-head">
+        <div class="sec-badge">S</div>
+        <div>
+          <h2>Success Indicators</h2>
+          <p>What a competition-ready team looks like at the end</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="check-item glass-card"><span class="tick">✓</span>Innovative and practical solution</div>
+        <div class="check-item glass-card"><span class="tick">✓</span>Reliable, working functionality</div>
+        <div class="check-item glass-card"><span class="tick">✓</span>Strong technical implementation</div>
+        <div class="check-item glass-card"><span class="tick">✓</span>Professional documentation &amp; presentation</div>
+        <div class="check-item glass-card"><span class="tick">✓</span>Team collaboration and confidence</div>
+        <div class="check-item glass-card"><span class="tick">✓</span>High alignment with Techfest judging criteria</div>
+      </div>
+      <div class="check-item glass-card gold" style="margin-top:12px;">
+        <span class="tick">✓</span>
+        Guided, pitch-ready presentation session — every team rehearses and refines their final pitch with mentor feedback before demo day
+      </div>
+
+      <div class="vision-card glass-card">
+        <span class="tag">Mentor's Vision</span>
+        <p><b>Goal:</b> Every team should leave the workshop with a competition-ready prototype, a compelling technical story, and the confidence to compete at national-level innovation events.</p>
+      </div>
+
+      <div class="point-card">
+        <h4>Final Point · Pitch-Ready Guidance</h4>
+        <p>Beyond building the prototype, mentors dedicate a focused pitch-readiness session in the closing days — coaching every team on narrative structure, live-demo delivery, and confident Q&amp;A handling, so they walk into judging as polished and prepared as their prototype.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-section" id="outro">
+    <div class="outro-inner">
+      <span class="eyebrow">Ready when you are</span>
+      <h2>Build your arena-ready prototype.</h2>
+      <p>Ten days, five phases, one competition-ready demo. Head back to the classic hub to register a team or revisit any arena's brief.</p>
+      <div class="hero-actions">
+        <a href="jg-techverse-2026.html" class="btn btn-glow">Back to TechVerse hub</a>
+        <!-- <a href="workshops.html" class="btn btn-outline">All workshops</a> -->
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer class="site-footer">
+  <span>Premium Autonomous Workshop · Mentor Playbook</span>
+  <span>TechVerse 2026 · JG University</span>
+</footer>
 
 <script>
 (function(){
-  "use strict";
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
-  function initials(s){ var w=(s||"").trim().split(/\s+/); return ((w[0]||"")[0]||"?") + ((w[1]||"")[0]||""); }
+"use strict";
 
-  var PALETTE = ["#22e0ff","#a855f7","#ff3fa0","#ffb020","#ff7a45","#29ffa0"];
-  function hashColor(str){
-    var h = 0, s = str || "x";
-    for(var i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
-    return PALETTE[h % PALETTE.length];
+/* ---------------- starfield background — same visual language as bgCanvas in source ---------------- */
+var canvas = document.getElementById("bgCanvas");
+var ctx = canvas.getContext("2d");
+var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var dpr = Math.min(window.devicePixelRatio || 1, 2);
+var stars = [];
+var W, H;
+
+function resize(){
+  W = canvas.width  = window.innerWidth  * dpr;
+  H = canvas.height = window.innerHeight * dpr;
+  canvas.style.width  = window.innerWidth  + "px";
+  canvas.style.height = window.innerHeight + "px";
+}
+function makeStars(){
+  var count = window.innerWidth < 780 ? 140 : 260;
+  stars = [];
+  for(var i=0;i<count;i++){
+    stars.push({
+      x: Math.random()*W,
+      y: Math.random()*H,
+      r: (Math.random()*1.4 + 0.3) * dpr,
+      hue: Math.random() < 0.7 ? "255,255,255" : (Math.random() < 0.5 ? "57,230,255" : "167,139,250"),
+      baseA: Math.random()*0.5 + 0.25,
+      tw: Math.random()*Math.PI*2,
+      speed: Math.random()*0.15 + 0.02
+    });
   }
+}
+resize(); makeStars();
+window.addEventListener("resize", function(){ resize(); makeStars(); });
 
-  // "12 seats left" -> 12; if we can't find a number, treat as plenty of room.
-  function seatsClass(seatsText){
-    var match = String(seatsText || "").match(/\d+/);
-    if(!match) return "seats-ok";
-    var n = parseInt(match[0], 10);
-    if(n <= 3) return "seats-crit";
-    if(n <= 10) return "seats-low";
-    return "seats-ok";
+ctx.fillStyle = "#03040a";
+ctx.fillRect(0,0,W,H);
+
+function frame(t){
+  ctx.fillStyle = "#03040a";
+  ctx.fillRect(0,0,W,H);
+  for(var i=0;i<stars.length;i++){
+    var s = stars[i];
+    var a = reducedMotion ? s.baseA : s.baseA + Math.sin(t*0.001*s.speed*4 + s.tw)*0.25;
+    ctx.beginPath();
+    ctx.fillStyle = "rgba("+s.hue+","+Math.max(0,a).toFixed(2)+")";
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    ctx.fill();
   }
+  if(!reducedMotion) requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
 
-  fetch("php/content_get.php?section=workshops")
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      var items = (data && data.success && data.content && data.content.workshops) || [];
-      if(!items.length) return;
-      var grid = document.getElementById("workshopsGrid");
-      grid.innerHTML = "";
-      items.forEach(function(w){
-        var accent = hashColor(w.track || w.title || "");
-        var card = document.createElement("div");
-        card.className = "hud-card";
-        card.style.setProperty("--accent", accent);
-
-        var speakerRow = w.speaker
-          ? '<div class="hud-speaker-row">' +
-              '<div class="hud-avatar">' + esc(initials(w.speaker)).toUpperCase() + '</div>' +
-              '<div><span class="hud-speaker-name">' + esc(w.speaker) + '</span><span class="hud-speaker-role">Speaker</span></div>' +
-            '</div>'
-          : '';
-
-        var metaRows = "";
-        if(w.when)  metaRows += '<div class="hud-meta-row"><b>When</b><span>' + esc(w.when) + '</span></div>';
-
-        card.innerHTML =
-          '<div class="hud-banner">' +
-            (w.image_url ? '<img src="' + esc(w.image_url) + '" alt="">' : '<span class="hud-callsign">' + esc(w.track || "Workshop") + '</span>') +
-          '</div>' +
-          '<div class="hud-body">' +
-            (w.track ? '<span class="hud-tag">' + esc(w.track) + '</span>' : '') +
-            '<h3 class="hud-title">' + esc(w.title || "Untitled workshop") + '</h3>' +
-            (w.description ? '<p class="hud-desc">' + esc(w.description) + '</p>' : '') +
-            speakerRow +
-            (metaRows ? '<div class="hud-meta">' + metaRows + '</div>' : '') +
-            (w.seats ? '<span class="hud-pill ' + seatsClass(w.seats) + '">' + esc(w.seats) + '</span>' : '') +
-            (w.register_url ? '<div class="hud-actions"><a class="btn btn-primary" href="' + esc(w.register_url) + '">Reserve a seat</a></div>' : '') +
-          '</div>';
-        grid.appendChild(card);
-      });
-    })
-    .catch(function(){ /* keep placeholder if the API isn't reachable yet */ });
+/* ---------------- header: scroll state + mobile menu — logic copied from source ---------------- */
+var header = document.getElementById("siteHeader");
+var burger = document.getElementById("headerBurger");
+var nav = document.getElementById("headerNav");
+function onHeaderScroll(){
+  if(!header) return;
+  header.classList.toggle("scrolled", window.scrollY > 40);
+}
+window.addEventListener("scroll", onHeaderScroll, { passive:true });
+onHeaderScroll();
+function setNavOpen(open){
+  nav.classList.toggle("open", open);
+  burger.classList.toggle("open", open);
+  burger.setAttribute("aria-expanded", open ? "true" : "false");
+  document.documentElement.classList.toggle("nav-open", open);
+}
+if(burger && nav){
+  burger.addEventListener("click", function(){
+    setNavOpen(!nav.classList.contains("open"));
+  });
+  nav.addEventListener("click", function(e){
+    if(e.target.closest("a")) setNavOpen(false);
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && nav.classList.contains("open")) setNavOpen(false);
+  });
+}
 })();
 </script>
 
-<script>
-/* ---------- premium header: scroll state + mobile menu ---------- */
-(function(){
-  var header = document.getElementById("siteHeader");
-  var burger = document.getElementById("headerBurger");
-  var nav = document.getElementById("headerNav");
-  function onHeaderScroll(){
-    if(!header) return;
-    header.classList.toggle("scrolled", window.scrollY > 40);
-  }
-  window.addEventListener("scroll", onHeaderScroll, { passive:true });
-  onHeaderScroll();
-  function setNavOpen(open){
-    nav.classList.toggle("open", open);
-    burger.classList.toggle("open", open);
-    burger.setAttribute("aria-expanded", open ? "true" : "false");
-    document.documentElement.classList.toggle("nav-open", open); // locks background scroll (see html.nav-open rule)
-  }
-  if(burger && nav){
-    burger.addEventListener("click", function(){
-      setNavOpen(!nav.classList.contains("open"));
-    });
-    nav.addEventListener("click", function(e){
-      if(e.target.closest("a")){
-        setNavOpen(false);
-      }
-    });
-    document.addEventListener("keydown", function(e){
-      if(e.key === "Escape" && nav.classList.contains("open")) setNavOpen(false);
-    });
-  }
-})();
-</script>
 </body>
 </html>
